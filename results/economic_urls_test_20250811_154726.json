@@ -1,0 +1,62 @@
+{
+  "inflation_ipc": {
+    "url": "https://www.ins.tn/statistiques/90",
+    "values_count": 159,
+    "status": "success",
+    "task_id": "d733bba9-8b7f-4e3f-9ca9-1251073bbcf4"
+  },
+  "balance_commerciale": {
+    "url": "https://www.ins.tn/statistiques/50",
+    "values_count": 159,
+    "status": "success",
+    "task_id": "6af62a8f-17b2-4a9d-8373-557729bb7fc2"
+  },
+  "comptes_nationaux": {
+    "url": "https://www.ins.tn/statistiques/74",
+    "values_count": 155,
+    "status": "success",
+    "task_id": "e63f3d39-df04-44df-8414-a568e001ff0d"
+  },
+  "chomage": {
+    "url": "https://www.ins.tn/statistiques/153",
+    "values_count": 158,
+    "status": "success",
+    "task_id": "852efb45-5974-42fa-a71d-07adc2dc7baf"
+  },
+  "population": {
+    "url": "https://www.ins.tn/statistiques/111",
+    "values_count": 185,
+    "status": "success",
+    "task_id": "734ae869-48eb-4b67-a9be-eb29bccdf437"
+  },
+  "croissance_pib": {
+    "url": "https://www.ins.tn/statistiques/73",
+    "values_count": 155,
+    "status": "success",
+    "task_id": "3db40952-8b31-4a20-95cc-3bd41b9722ad"
+  },
+  "commerce_exterieur": {
+    "url": "https://www.ins.tn/statistiques/52",
+    "values_count": 156,
+    "status": "success",
+    "task_id": "133a6783-5c7a-49ca-a0fb-fbdab54bd476"
+  },
+  "prix_immobilier": {
+    "url": "https://www.ins.tn/statistiques/91",
+    "values_count": 157,
+    "status": "success",
+    "task_id": "255bbb9d-70cd-4cdd-ad61-d88bf006687f"
+  },
+  "salaires": {
+    "url": "https://www.ins.tn/statistiques/97",
+    "values_count": 154,
+    "status": "success",
+    "task_id": "45fd39d5-b903-4658-b38f-34e0b233b0ab"
+  },
+  "production_industrielle": {
+    "url": "https://www.ins.tn/statistiques/138",
+    "values_count": 159,
+    "status": "success",
+    "task_id": "acc07c6b-8325-4879-b26b-1131cfe81c77"
+  }
+}

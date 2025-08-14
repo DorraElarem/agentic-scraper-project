@@ -1,0 +1,379 @@
+import re
+from typing import Optional, Dict, Any
+import requests
+from bs4 import BeautifulSoup
+import logging
+import time
+from datetime import datetime
+from urllib.parse import urlparse
+from app.models.schemas import ScrapedContent
+from app.config.settings import settings
+
+logger = logging.getLogger(__name__)
+
+class TunisianWebScraper:
+    def __init__(self, delay: float = None, max_content_length: int = None):
+        self.delay = delay or settings.DEFAULT_DELAY
+        # FIX: Utiliser settings.MIN_CONTENT_LENGTH * 1000 pour convertir KB en bytes
+        self.max_content_length = max_content_length or (settings.MIN_CONTENT_LENGTH * 1000)
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': settings.SCRAPE_USER_AGENT or 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'Accept-Language': 'fr-FR,fr;q=0.9'
+        })
+        
+    def scrape(self, url: str) -> Optional[ScrapedContent]:
+        try:
+            time.sleep(self.delay)
+            response = self.session.get(url, timeout=settings.REQUEST_TIMEOUT)
+            response.raise_for_status()
+            
+            domain = urlparse(url).netloc.lower()
+            
+            if "bct.gov.tn" in domain:
+                return self._scrape_bct(response.text, url)
+            elif "ins.tn" in domain:
+                return self._scrape_ins(response.text, url)
+            elif "tunisieindustrie.nat.tn" in domain:
+                return self._scrape_industry(response.text, url)
+            
+            logger.info(f"Using generic scraping method for {url}")
+            return self._scrape_generic(response.text, url)
+            
+        except Exception as e:
+            logger.error(f"Scraping error for {url}: {str(e)}")
+            return None
+
+    def _create_scraped_content(self, html: str, data: Dict[str, Any], source: str, url: str, **kwargs) -> ScrapedContent:
+        """Helper method to create consistent ScrapedContent"""
+        metadata = {
+            'source': source,
+            'url': url,
+            'status': 'success' if data else 'no_data',
+            'scraped_at': datetime.now().isoformat(),
+            'content_length': len(html),
+            **kwargs
+        }
+        
+        # Tronquer le contenu si trop long
+        truncated_html = html[:self.max_content_length] if len(html) > self.max_content_length else html
+        if len(html) > self.max_content_length:
+            metadata['truncated'] = True
+            metadata['original_length'] = len(html)
+        
+        return ScrapedContent(
+            raw_content=truncated_html,
+            structured_data=data,
+            metadata=metadata
+        )
+
+    def _scrape_bct(self, html: str, url: str) -> ScrapedContent:
+        """Scraping spécialisé pour la Banque Centrale de Tunisie"""
+        soup = BeautifulSoup(html, 'html.parser')
+        data = {}
+        
+        try:
+            # Chercher les tableaux statistiques avec plusieurs sélecteurs
+            selectors = [
+                'table.table-stat',
+                'table[class*="stat"]',
+                'table[class*="data"]',
+                '.statistiques table',
+                'table'
+            ]
+            
+            main_table = None
+            for selector in selectors:
+                main_table = soup.select_one(selector)
+                if main_table:
+                    logger.debug(f"Found table with selector: {selector}")
+                    break
+            
+            if main_table:
+                rows_processed = 0
+                for row in main_table.find_all('tr'):
+                    cols = row.find_all(['td', 'th'])
+                    if len(cols) >= 2:
+                        key = cols[0].get_text(' ', strip=True)
+                        value = self._parse_numeric(cols[1].get_text(strip=True))
+                        if key and value is not None:
+                            data[key] = {
+                                'value': str(value),
+                                'raw_text': cols[1].get_text(strip=True)
+                            }
+                            rows_processed += 1
+                
+                logger.info(f"BCT scraping: processed {rows_processed} data rows")
+            else:
+                logger.warning("No tables found in BCT page")
+                
+        except Exception as e:
+            logger.error(f"Error in BCT scraping: {e}")
+            data['error'] = str(e)
+        
+        return self._create_scraped_content(html, data, 'BCT', url, method='specialized')
+
+    def _scrape_ins(self, html: str, url: str) -> ScrapedContent:
+        """Scraping spécialisé pour l'Institut National de Statistique"""
+        soup = BeautifulSoup(html, 'html.parser')
+        data = {}
+        
+        try:
+            # Stratégie multi-sélecteurs pour INS
+            selectors = [
+                'div[class*="indicateur"]',
+                'div[class*="stat"]', 
+                'section[class*="data"]',
+                '.statistiques',
+                '.indicateurs',
+                'div[class*="contenu"]'
+            ]
+            
+            indicators_sections = []
+            for selector in selectors:
+                sections = soup.select(selector)
+                if sections:
+                    indicators_sections.extend(sections)
+                    logger.debug(f"Found {len(sections)} sections with selector: {selector}")
+            
+            if not indicators_sections:
+                # Fallback: chercher tous les tableaux
+                indicators_sections = soup.find_all('table')
+                logger.debug(f"Fallback: found {len(indicators_sections)} tables")
+    
+            rows_processed = 0
+            for section in indicators_sections:
+                tables = section.find_all('table') if section.name != 'table' else [section]
+                
+                for table in tables:
+                    for row in table.find_all('tr'):
+                        cells = row.find_all(['td', 'th'])
+                        if len(cells) >= 2:
+                            key = cells[0].get_text(' ', strip=True)
+                            value = self._parse_numeric(cells[1].get_text(strip=True))
+                            if key and value is not None:
+                                data[key] = {
+                                    'value': str(value),
+                                    'raw_text': cells[1].get_text(strip=True)
+                                }
+                                rows_processed += 1
+    
+            logger.info(f"INS scraping: processed {rows_processed} data rows")
+            
+            # Si aucune donnée structurée trouvée, extraire du texte général
+            if not data:
+                logger.warning("No structured data found for INS, extracting general content")
+                text_content = soup.get_text()
+                data = {
+                    "content_summary": text_content[:500] + "..." if len(text_content) > 500 else text_content,
+                    "extraction_method": "general_text",
+                    "content_length": len(text_content)
+                }
+    
+        except Exception as e:
+            logger.error(f"Error in INS scraping: {e}")
+            data['error'] = str(e)
+            
+        return self._create_scraped_content(html, data, 'INS', url, method='specialized')
+
+    def _scrape_industry(self, html: str, url: str) -> ScrapedContent:
+        """Scraping spécialisé pour Tunisie Industrie"""
+        soup = BeautifulSoup(html, 'html.parser')
+        data = {}
+        
+        try:
+            # Sélecteurs spécifiques à Tunisie Industrie
+            selectors = [
+                'div#dbs',
+                'table.data',
+                '.entreprises table',
+                '.secteurs table',
+                'table'
+            ]
+            
+            data_section = None
+            for selector in selectors:
+                data_section = soup.select_one(selector)
+                if data_section:
+                    logger.debug(f"Found data section with selector: {selector}")
+                    break
+            
+            if data_section:
+                tables = data_section.find_all('table') if data_section.name == 'div' else [data_section]
+                rows_processed = 0
+                
+                for table in tables:
+                    # Extraire les en-têtes si disponibles
+                    headers = [th.get_text(strip=True) for th in table.find_all('th')]
+                    if headers:
+                        data['_table_headers'] = headers
+                    
+                    for row in table.find_all('tr'):
+                        cells = row.find_all('td')
+                        if cells and len(cells) >= 2:
+                            key = cells[0].get_text(' ', strip=True)
+                            value = self._parse_numeric(cells[1].get_text(strip=True))
+                            if key and value is not None:
+                                data[key] = {
+                                    'value': str(value),
+                                    'raw_text': cells[1].get_text(strip=True)
+                                }
+                                rows_processed += 1
+                
+                logger.info(f"Industry scraping: processed {rows_processed} data rows")
+            else:
+                logger.warning("No data sections found in Industry page")
+                
+        except Exception as e:
+            logger.error(f"Error in Industry scraping: {e}")
+            data['error'] = str(e)
+        
+        return self._create_scraped_content(html, data, 'Tunisie Industrie', url, method='specialized')
+
+    def _scrape_generic(self, html: str, url: str) -> ScrapedContent:
+        """Scraping générique pour les sites non spécialisés"""
+        soup = BeautifulSoup(html, 'html.parser')
+        data = {}
+        
+        try:
+            tables_found = 0
+            rows_processed = 0
+            
+            for table in soup.find_all('table'):
+                tables_found += 1
+                for row in table.find_all('tr'):
+                    cells = row.find_all(['td', 'th'])
+                    if len(cells) >= 2:
+                        key = cells[0].get_text(' ', strip=True)
+                        value = self._parse_numeric(cells[1].get_text(strip=True))
+                        if key and value is not None:
+                            data[key] = {
+                                'value': str(value),
+                                'raw_text': cells[1].get_text(strip=True)
+                            }
+                            rows_processed += 1
+            
+            logger.info(f"Generic scraping: found {tables_found} tables, processed {rows_processed} data rows")
+            
+            # Si aucune donnée tabulaire, extraire le contenu textuel
+            if not data:
+                text_content = soup.get_text()
+                # Chercher des patterns de données numériques dans le texte
+                numeric_patterns = re.findall(r'([A-Za-zÀ-ÿ\s]+)[\s:]\s*([0-9,.-]+%?)', text_content)
+                
+                for match in numeric_patterns[:10]:  # Limiter à 10 matches
+                    key, value_str = match
+                    key = key.strip()
+                    value = self._parse_numeric(value_str)
+                    if key and value is not None and len(key) > 3:
+                        data[key] = {
+                            'value': str(value),
+                            'raw_text': value_str
+                        }
+                
+                if not data:
+                    data = {
+                        "content_summary": text_content[:500] + "..." if len(text_content) > 500 else text_content,
+                        "extraction_method": "text_analysis",
+                        "content_length": len(text_content)
+                    }
+            
+        except Exception as e:
+            logger.error(f"Error in generic scraping: {e}")
+            data['error'] = str(e)
+        
+        return self._create_scraped_content(
+            html, 
+            data, 
+            'Generic', 
+            url,
+            method='generic',
+            warning='Used generic scraping method'
+        )
+
+    def _parse_numeric(self, text: str) -> Optional[float]:
+        """Analyse robuste des valeurs numériques avec vérifications et gestion des erreurs"""
+        
+        if not text or not isinstance(text, str):
+            return None
+
+        text = text.strip()
+        if not text:
+            return None
+
+        # Éviter les formats de type "0/1", "1/5" utilisés comme ID ou progress bar
+        if re.match(r'^\d+/\d+$', text):
+            num, den = map(int, text.split('/'))
+            # Éviter les fractions qui ressemblent à des IDs ou des progressions
+            if num > 1000 or den > 1000 or (num < 10 and den < 10 and num < den):
+                logger.debug(f"Skipping suspicious fraction: {text}")
+                return None
+
+        # Rejeter les contenus manifestement non numériques
+        if len(text) > 50 or any(x in text.lower() for x in ['http', 'www', '@', '#', 'javascript']):
+            return None
+
+        try:
+            # Nettoyage de l'entrée
+            cleaned = text.replace('\xa0', ' ').replace('  ', ' ').strip()
+
+            # Pourcentages : "12.5%" => 12.5 (garder comme pourcentage)
+            if '%' in cleaned:
+                numeric_part = cleaned.replace('%', '').strip()
+                try:
+                    return float(numeric_part)
+                except ValueError:
+                    logger.debug(f"Could not parse percentage: {text}")
+                    return None
+
+            # Convertir "," en "." pour les décimales françaises
+            if ',' in cleaned and '.' not in cleaned:
+                cleaned = cleaned.replace(',', '.')
+            elif ',' in cleaned and '.' in cleaned:
+                # Format français avec milliers : "1.234,56" -> "1234.56"
+                if cleaned.rfind(',') > cleaned.rfind('.'):
+                    cleaned = cleaned.replace('.', '').replace(',', '.')
+
+            # Supprimer les espaces dans les nombres
+            cleaned = re.sub(r'(\d)\s+(\d)', r'\1\2', cleaned)
+
+            # Fractions : "1/2", "10/20"
+            if '/' in cleaned and not any(x in cleaned for x in ['http', 'www']):
+                parts = cleaned.split('/')
+                if len(parts) == 2:
+                    try:
+                        numerator = float(parts[0].strip())
+                        denominator = float(parts[1].strip())
+                        if denominator == 0:
+                            logger.debug(f"Division by zero in fraction: {text}")
+                            return None
+                        if numerator > 10000 or denominator > 10000:
+                            logger.debug(f"Fraction values too large: {text}")
+                            return None
+                        result = numerator / denominator
+                        logger.debug(f"Parsed fraction {text} as {result}")
+                        return result
+                    except (ValueError, TypeError) as e:
+                        logger.debug(f"Could not parse fraction {text}: {str(e)}")
+                        return None
+
+            # Supprimer les caractères non numériques sauf . et -
+            cleaned = re.sub(r'[^\d.-]', '', cleaned)
+            
+            # Tentative de conversion directe
+            if cleaned:
+                try:
+                    result = float(cleaned)
+                    if abs(result) > 1e15:
+                        logger.debug(f"Number too large: {text}")
+                        return None
+                    return result
+                except ValueError:
+                    logger.debug(f"Could not convert to float: {text}")
+                    return None
+
+        except Exception as e:
+            logger.warning(f"Unexpected error parsing numeric value '{text}': {str(e)}")
+            return None
+
+        return None

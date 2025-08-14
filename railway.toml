@@ -1,0 +1,59 @@
+# 🚂 Configuration Railway pour Agentic Scraper
+[build]
+  builder = "dockercompose"
+  dockerComposeFile = "docker-compose.railway.yml"
+
+[deploy]
+  numReplicas = 1
+  sleepApplication = false
+  restartPolicyType = "ON_FAILURE"
+
+# 🚀 Service Web Principal
+[[services]]
+  name = "web"
+  serviceName = "web"
+  
+  [services.variables]
+    PORT = "8000"
+    APP_ENV = "production"
+    DEBUG = "false"
+    PYTHONUNBUFFERED = "1"
+    PYTHONPATH = "/app"
+    OLLAMA_MODEL = "tinyllama:latest"
+    OLLAMA_TIMEOUT = "60"
+    ENABLE_LLM_ANALYSIS = "true"
+    DEFAULT_DELAY = "2.5"
+    REQUEST_TIMEOUT = "30"
+    SCRAPE_MAX_RETRIES = "3"
+    MAX_CONTENT_LENGTH_KB = "5000"
+    SCRAPE_USER_AGENT = "Mozilla/5.0 (compatible; AgenticScraper/1.0)"
+    CELERY_ACCEPT_CONTENT = "json"
+    CELERY_TASK_SERIALIZER = "json"
+    CELERY_RESULT_SERIALIZER = "json"
+    CELERY_TIMEZONE = "UTC"
+
+# 🧠 Worker Celery  
+[[services]]
+  name = "worker"
+  serviceName = "worker"
+  
+  [services.variables]
+    APP_ENV = "production"
+    DEBUG = "false"
+    PYTHONUNBUFFERED = "1"
+    PYTHONPATH = "/app"
+    OLLAMA_MODEL = "tinyllama:latest"
+    OLLAMA_TIMEOUT = "60"
+
+# 🤖 Service Ollama
+[[services]]
+  name = "ollama"
+  serviceName = "ollama"
+  
+  [services.variables]
+    OLLAMA_HOST = "0.0.0.0"
+
+# 📊 Flower Monitoring
+[[services]]
+  name = "flower"
+  serviceName = "flower"

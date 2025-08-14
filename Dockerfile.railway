@@ -1,0 +1,56 @@
+# 🚂 Dockerfile optimisé pour Railway
+FROM python:3.11-slim
+
+# 🏷️ Métadonnées
+LABEL maintainer="Votre nom - Projet de stage"
+LABEL description="Agentic Scraper - Système de scraping intelligent avec IA"
+LABEL version="1.0.0"
+
+# 🌍 Variables d'environnement
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/app
+ENV PORT=8000
+
+# 📦 Installation des dépendances système
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    wget \
+    git \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 📁 Créer le répertoire de travail
+WORKDIR /app
+
+# 📋 Copier les fichiers de requirements en premier (pour le cache Docker)
+COPY requirements.txt .
+
+# 🐍 Installer les dépendances Python
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 📂 Copier le code source
+COPY . .
+
+# 🔧 Créer les répertoires nécessaires
+RUN mkdir -p /app/logs
+RUN mkdir -p /app/data
+
+# 👤 Créer un utilisateur non-root pour la sécurité
+RUN adduser --disabled-password --gecos '' appuser
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# 🌐 Exposer le port
+EXPOSE $PORT
+
+# 🏥 Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:$PORT/health || exit 1
+
+# 🚀 Commande par défaut (sera surchargée par docker-compose)
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port $PORT"]

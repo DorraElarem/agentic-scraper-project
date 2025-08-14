@@ -1,0 +1,678 @@
+{
+  "task_info": {
+    "task_id": "ce2bfdbf-4813-4c83-a888-10f691dab4ad",
+    "url": "https://www.ins.tn/statistiques",
+    "status": "completed",
+    "scraped_at": "2025-08-05T17:48:35.655807"
+  },
+  "content_stats": {
+    "total_characters": 55779,
+    "word_count": 2579,
+    "has_tables": false,
+    "table_count": 0
+  },
+  "economic_indicators": {
+    "commerce_exterieur": [
+      "balance commerciale",
+      "balance commerciale",
+      "commerce extérieur",
+      "million dinars",
+      "million dinars",
+      "millions de dinars",
+      "millions de dinars",
+      "balance",
+      "balance",
+      "balance",
+      "balance"
+    ],
+    "population": [
+      "habitant",
+      "habitant",
+      "recensement"
+    ],
+    "emploi": [
+      "smig",
+      "salaire",
+      "smag",
+      "salaire"
+    ],
+    "prix_inflation": [
+      "prix",
+      "prix",
+      "prix",
+      "prix à la consommation"
+    ],
+    "comptes_nationaux": [
+      "formation brute"
+    ],
+    "secteurs": [
+      "production",
+      "secteur"
+    ],
+    "autres": [
+      {
+        "text": "EN",
+        "url": "/en/statistiques",
+        "type": "statistical_link"
+      },
+      {
+        "text": "AR",
+        "url": "/ar/statistiques",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Statistiques par thèmes",
+        "url": "/statistiques/45",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Analyse de Données",
+        "url": "http://dataportal.ins.tn/fr/DataAnalysis",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Requête de données",
+        "url": "http://dataportal.ins.tn/fr/DataQuery",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Divers",
+        "url": "/statistiques/505",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Droits Fondamentaux des femmes",
+        "url": "/statistiques/513",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Indicateurs Démographiques du Genre",
+        "url": "/statistiques/506",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Paticipation Économique",
+        "url": "/statistiques/517",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Education",
+        "url": "/statistiques/523",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Santé",
+        "url": "/statistiques/529",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Agriculture",
+        "url": "/statistiques/1",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Production animales",
+        "url": "/statistiques/45",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Production végétale",
+        "url": "/statistiques/46",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Pêche et aquaculture",
+        "url": "/statistiques/47",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Données structurelles",
+        "url": "/statistiques/48",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Climatologie",
+        "url": "/statistiques/85",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Température",
+        "url": "/statistiques/86",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Pluviométrie",
+        "url": "/statistiques/87",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Commerce Exterieur",
+        "url": "/statistiques/2",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Balance commerciale",
+        "url": "/statistiques/50",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Echanges par groupement sectoriel d'activité",
+        "url": "/statistiques/52",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Echanges par type d'utilisation",
+        "url": "/statistiques/53",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Echanges par pays",
+        "url": "/statistiques/54",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Echanges par principaux produits",
+        "url": "/statistiques/55",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Indice des valeurs unitaires",
+        "url": "/statistiques/68",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Compte de la nation",
+        "url": "/statistiques/3",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Les comptes nationaux trimestriels (Base 2015)",
+        "url": "/statistiques/72",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Équilibre général annuel (Base 2015)",
+        "url": "/statistiques/73",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Principaux Agrégats Economiques (Base 2015)",
+        "url": "/statistiques/74",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Valeurs ajoutées (Base 2015)",
+        "url": "/statistiques/75",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Formation Brute du Capital Fixe par domaine (Base 2015)",
+        "url": "/statistiques/76",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Culture",
+        "url": "/statistiques/4",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Réseau des bibliothèques",
+        "url": "/statistiques/77",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Cinéma",
+        "url": "/statistiques/78",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Maisons des jeunes",
+        "url": "/statistiques/79",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Salles de sport",
+        "url": "/statistiques/80",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Education",
+        "url": "/statistiques/5",
+        "type": "statistical_link"
+      },
+      {
+        "text": "1er cycle de l'enseignement de base",
+        "url": "/statistiques/81",
+        "type": "statistical_link"
+      },
+      {
+        "text": "2ème cycle de l'enseignement de base public et l'enseignement secondaire public",
+        "url": "/statistiques/82",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Année préparatoire",
+        "url": "/statistiques/83",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Enseignement supérieure",
+        "url": "/statistiques/84",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Emploi",
+        "url": "/statistiques/150",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Population active",
+        "url": "/statistiques/151",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Population occupée",
+        "url": "/statistiques/152",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Chômage",
+        "url": "/statistiques/153",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Statistiques des bureaux d'emploi",
+        "url": "/statistiques/154",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Energie",
+        "url": "/statistiques/146",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Electricité",
+        "url": "/statistiques/147",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Gaz naturel",
+        "url": "/statistiques/148",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Pétrole",
+        "url": "/statistiques/149",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Entreprises",
+        "url": "/statistiques/92",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Evolution d'entreprises",
+        "url": "/statistiques/93",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Les salariés",
+        "url": "/statistiques/94",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Démographie des entreprises",
+        "url": "/statistiques/95",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Environnement",
+        "url": "/statistiques/140",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Eau",
+        "url": "/statistiques/141",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Air",
+        "url": "/statistiques/142",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Sols et forêts",
+        "url": "/statistiques/143",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Biodiversité",
+        "url": "/statistiques/145",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Industrie",
+        "url": "/statistiques/134",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Industrie Agro-Alimentaires",
+        "url": "/statistiques/135",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Industrie Chimiques",
+        "url": "/statistiques/136",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Industrie Manufacturières Diverses",
+        "url": "/statistiques/137",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Indice de la production industrielle",
+        "url": "/statistiques/138",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Industrie Mécaniques et Electriques",
+        "url": "/statistiques/139",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Justice",
+        "url": "/statistiques/132",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Activité des tribunaux",
+        "url": "/statistiques/133",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Ménages et conditions de vie",
+        "url": "/statistiques/100",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Indicateurs d'infrastructures",
+        "url": "/statistiques/101",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Pauvreté",
+        "url": "/statistiques/102",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Parc de logement",
+        "url": "/statistiques/103",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Ménages et conditions de vie",
+        "url": "/statistiques/104",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Monnaie et finance",
+        "url": "/statistiques/105",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Marché financier",
+        "url": "/statistiques/106",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Marchés monétaires",
+        "url": "/statistiques/107",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Bourse",
+        "url": "/statistiques/108",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Population",
+        "url": "/statistiques/109",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Indicateurs démographiques",
+        "url": "/statistiques/110",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Estimation de la population",
+        "url": "/statistiques/111",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Naissances",
+        "url": "/statistiques/112",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Mariages",
+        "url": "/statistiques/113",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Divorces",
+        "url": "/statistiques/114",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Décès",
+        "url": "/statistiques/115",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Prix",
+        "url": "/statistiques/88",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Indices des Prix de Vente Industriels ,IPVI",
+        "url": "/statistiques/89",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Indices des Prix à la Consommation familiale, IPC",
+        "url": "/statistiques/90",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Indices des prix de l'immobilier",
+        "url": "/statistiques/91",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Salaires",
+        "url": "/statistiques/96",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Salaire Minimum Interprofessionnel Garanti (SMIG)",
+        "url": "/statistiques/97",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Salaire Minimum Agricole Garanti (SMAG)",
+        "url": "/statistiques/98",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Taux d'évolution du salaire moyen dans le secteur privé non agricole",
+        "url": "/statistiques/99",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Santé",
+        "url": "/statistiques/121",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Infrastructure sanitaire",
+        "url": "/statistiques/122",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Indicateurs de santé",
+        "url": "/statistiques/123",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Planification familiale et santé de la reproduction",
+        "url": "/statistiques/124",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Technologies de communication",
+        "url": "/statistiques/125",
+        "type": "statistical_link"
+      },
+      {
+        "text": "La poste",
+        "url": "/statistiques/126",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Télécommunications",
+        "url": "/statistiques/127",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Tourisme",
+        "url": "/statistiques/128",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Principaux indicateurs touristiques",
+        "url": "/statistiques/129",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Nuitées touristiques et hébergement",
+        "url": "/statistiques/130",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Les Entrées-Sorties touristiques",
+        "url": "/statistiques/131",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Transport",
+        "url": "/statistiques/116",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Transport routier",
+        "url": "/statistiques/117",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Transport ferroviaire",
+        "url": "/statistiques/118",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Transport aérien",
+        "url": "/statistiques/119",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Tansport maritime",
+        "url": "/statistiques/120",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Page suivante\n››",
+        "url": "/statistiques?page=1",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Données",
+        "url": "/quicktabs/nojs/statistique_instance/0",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Publications",
+        "url": "/quicktabs/nojs/statistique_instance/1",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Méthodes",
+        "url": "/quicktabs/nojs/statistique_instance/2",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Banque de données en ligne",
+        "url": "http://dataportal.ins.tn/",
+        "type": "statistical_link"
+      },
+      {
+        "text": "Statistiques",
+        "url": "/statistiques/45",
+        "type": "statistical_link"
+      }
+    ]
+  },
+  "data_tables": [],
+  "thematic_sections": [
+    {
+      "class": [
+        "block",
+        "block-theme-statistique",
+        "clearfix"
+      ],
+      "id": "block-myblock-2",
+      "text_preview": "\nDiversDroits Fondamentaux des femmesIndicateurs Démographiques du GenrePaticipation ÉconomiqueEducationSantéAgricultureProduction animalesProduction végétalePêche et aquacultureDonnées structurellesC..."
+    },
+    {
+      "class": [
+        "view",
+        "view-statistiques",
+        "view-id-statistiques",
+        "view-display-id-page_1",
+        "js-view-dom-id-509d5c3a20e705afc6723db9618bea6de3c528b1bdbaa5be78b96d36fce09621"
+      ],
+      "id": null,
+      "text_preview": "\n\n\n\nExports by Country\n\n\n\nEn savoir plus sur Exports by Country\n\n\n\n\n\nالميزان التجاري الشهري (مليون دينار)\n\n\n\nEn savoir plus sur الميزان التجاري الشهري (مليون دينار)\n\n\n\n\n\nMonthly Trade balance (Million..."
+    },
+    {
+      "class": [
+        "block",
+        "block-quicktabs",
+        "block-quicktabs-blockstatistique-instance",
+        "clearfix"
+      ],
+      "id": "block-quicktabsstatistiquetabs",
+      "text_preview": "\nDonnéesPublicationsMéthodes\n\nNo dataOpen Modal\n\n\n\n\n\n\n\n\n\n\n\n\nPas de contenu\n\n\n\nPas de contenu\n\n\n\n"
+    },
+    {
+      "class": [
+        "stat"
+      ],
+      "id": null,
+      "text_preview": "No data"
+    }
+  ],
+  "recommendations": [
+    "✅ Commerce Exterieur: 11 indicateurs détectés - Créer un extracteur spécialisé",
+    "✅ Population: 3 indicateurs détectés - Créer un extracteur spécialisé",
+    "✅ Emploi: 4 indicateurs détectés - Créer un extracteur spécialisé",
+    "✅ Prix Inflation: 4 indicateurs détectés - Créer un extracteur spécialisé",
+    "✅ Comptes Nationaux: 1 indicateurs détectés - Créer un extracteur spécialisé",
+    "✅ Secteurs: 2 indicateurs détectés - Créer un extracteur spécialisé",
+    "⚠️ Aucun tableau détecté - Vérifier si les données sont dans d'autres formats",
+    "🤖 Tester le mode 'advanced' avec LLM pour extraction intelligente",
+    "🔗 Explorer les liens vers les sous-sections spécialisées",
+    "📈 Créer des parsers pour les formats spécifiques (JSON, CSV, Excel)",
+    "🕐 Programmer des extractions régulières pour suivi temporel"
+  ]
+}

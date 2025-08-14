@@ -1,0 +1,142 @@
+# Docker Compose optimisé pour Railway
+version: '3.8'
+
+services:
+  # 🚀 Application Web Principal
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      # 🔧 Variables Railway (automatiquement injectées)
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
+      - APP_ENV=production
+      - DEBUG=false
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+      # 🤖 Configuration LLM
+      - OLLAMA_MODEL=tinyllama:latest
+      - OLLAMA_TIMEOUT=60
+      - ENABLE_LLM_ANALYSIS=true
+      # 🕷️ Configuration Scraping
+      - DEFAULT_DELAY=2.5
+      - REQUEST_TIMEOUT=30
+      - SCRAPE_MAX_RETRIES=3
+      - MAX_CONTENT_LENGTH_KB=5000
+      - SCRAPE_USER_AGENT=Mozilla/5.0 (compatible; AgenticScraper/1.0)
+      # 🔄 Celery (utilise Redis Railway)
+      - CELERY_BROKER_URL=${REDIS_URL}
+      - CELERY_RESULT_BACKEND=${REDIS_URL}
+      - CELERY_ACCEPT_CONTENT=json
+      - CELERY_TASK_SERIALIZER=json
+      - CELERY_RESULT_SERIALIZER=json
+      - CELERY_TIMEZONE=UTC
+    depends_on:
+      - redis
+      - db
+    command: >
+      sh -c "
+        echo '🚀 Démarrage de l\'application Railway...' &&
+        alembic upgrade head &&
+        echo '✅ Base de données initialisée' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+      "
+
+  # 🧠 Worker Celery
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
+      - APP_ENV=production
+      - DEBUG=false
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+      - OLLAMA_MODEL=tinyllama:latest
+      - OLLAMA_TIMEOUT=60
+      - CELERY_BROKER_URL=${REDIS_URL}
+      - CELERY_RESULT_BACKEND=${REDIS_URL}
+    depends_on:
+      - redis
+      - db
+      - ollama
+    command: >
+      sh -c "
+        echo '🧠 Démarrage Worker Celery...' &&
+        celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
+      "
+
+  # 🤖 Service Ollama avec TinyLlama
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    volumes:
+      - ollama_data:/root/.ollama
+    command: >
+      sh -c "
+        echo '🤖 Démarrage Ollama...' &&
+        ollama serve &
+        sleep 10 &&
+        echo '📥 Installation TinyLlama...' &&
+        ollama pull tinyllama:latest &&
+        echo '✅ TinyLlama prêt!' &&
+        wait
+      "
+
+  # 🗄️ PostgreSQL (sera remplacé par Railway)
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD:-railway123}
+      - POSTGRES_DB=${DATABASE_NAME:-railway}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # 🔄 Redis (sera remplacé par Railway)  
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # 📊 Flower (Monitoring Celery)
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - CELERY_BROKER_URL=${REDIS_URL}
+      - CELERY_RESULT_BACKEND=${REDIS_URL}
+    depends_on:
+      - redis
+    ports:
+      - "5555:5555"
+    command: >
+      sh -c "
+        echo '🌸 Démarrage Flower...' &&
+        celery -A app.tasks.celery_app flower --port=5555 --broker=${REDIS_URL}
+      "
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:
+
+networks:
+  default:
+    name: agentic_scraper_railway

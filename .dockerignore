@@ -1,0 +1,161 @@
+# ===================================
+# ENVIRONNEMENTS VIRTUELS (PRIORITÉ MAX)
+# ===================================
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# ===================================
+# CACHE PYTHON
+# ===================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ===================================
+# GIT ET VCS
+# ===================================
+.git/
+.gitignore
+.gitattributes
+.svn/
+
+# ===================================
+# IDES ET ÉDITEURS
+# ===================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ===================================
+# LOGS ET TEMPORAIRES
+# ===================================
+*.log
+logs/
+log/
+temp/
+tmp/
+*.tmp
+*.temp
+
+# ===================================
+# DOCUMENTATION ET TESTS
+# ===================================
+README.md
+*.md
+docs/
+documentation/
+tests/
+test_*
+*_test.py
+.pytest_cache/
+.coverage
+.tox/
+htmlcov/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# ===================================
+# DONNÉES ET MODÈLES (GROS FICHIERS)
+# ===================================
+data/
+datasets/
+models/
+*.csv
+*.json
+*.parquet
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+*.joblib
+
+# ===================================
+# NODE ET NPM
+# ===================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===================================
+# BACKUP ET ARCHIVES
+# ===================================
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# ===================================
+# JUPYTER
+# ===================================
+.ipynb_checkpoints
+*.ipynb
+
+# ===================================
+# MYPY ET LINTING
+# ===================================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.flake8
+.pylint.d/
+
+# ===================================
+# SCRAPY ET WEB SCRAPING
+# ===================================
+.scrapy
+scraped_data/
+screenshots/
+
+# ===================================
+# CELERY
+# ===================================
+celerybeat-schedule
+celerybeat.pid
+
+# ===================================
+# DOCKER (éviter la récursion)
+# ===================================
+Dockerfile
+docker-compose*.yml
+.dockerignore

@@ -1,0 +1,84 @@
+{
+  "summary": {
+    "total_tests": 9,
+    "passed": 2,
+    "failed": 7,
+    "success_rate": 22.22222222222222,
+    "total_duration": 0.07806181907653809,
+    "timestamp": "2025-08-13T18:16:24.730832"
+  },
+  "tests": [
+    {
+      "name": "test_1_health_check",
+      "status": "FAILED",
+      "duration": 0.01104593276977539,
+      "details": {},
+      "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    {
+      "name": "test_2_ollama_connectivity",
+      "status": "PASSED",
+      "duration": 0.014978647232055664,
+      "details": {
+        "ollama_status": "available",
+        "models_count": 1,
+        "models": [
+          "mistral:7b-instruct-v0.2-q4_0"
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "test_3_simple_scraping_standard",
+      "status": "FAILED",
+      "duration": 0.003999948501586914,
+      "details": {},
+      "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    {
+      "name": "test_4_advanced_scraping_with_llm",
+      "status": "FAILED",
+      "duration": 0.025008678436279297,
+      "details": {},
+      "error": "('Connection aborted.', ConnectionAbortedError(10053, 'Une connexion \u00e9tablie a \u00e9t\u00e9 abandonn\u00e9e par un logiciel de votre ordinateur h\u00f4te', None, 10053, None))"
+    },
+    {
+      "name": "test_5_multiple_urls",
+      "status": "FAILED",
+      "duration": 0.004013538360595703,
+      "details": {},
+      "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    {
+      "name": "test_6_error_handling",
+      "status": "FAILED",
+      "duration": 0.004000425338745117,
+      "details": {},
+      "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    {
+      "name": "test_7_ins_tn_real_website",
+      "status": "FAILED",
+      "duration": 0.004003286361694336,
+      "details": {},
+      "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    {
+      "name": "test_8_performance_benchmark",
+      "status": "FAILED",
+      "duration": 0.004012107849121094,
+      "details": {},
+      "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    {
+      "name": "test_9_celery_flower_monitoring",
+      "status": "PASSED",
+      "duration": 0.00699925422668457,
+      "details": {
+        "flower_available": false,
+        "status_code": 401
+      },
+      "error": null
+    }
+  ]
+}
