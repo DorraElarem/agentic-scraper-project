@@ -1,0 +1,160 @@
+{
+  "url": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique_a.jsp?params=PL212010",
+  "content": "",
+  "structured_data": {
+    "extracted_values": {},
+    "fallback_mode": true,
+    "error_recovery": true,
+    "original_error": "No content extracted",
+    "cohesive_insights": {
+      "comprehensive_analysis": true,
+      "all_utils_integrated": true,
+      "debug_analysis": {
+        "url": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique_a.jsp?params=PL212010",
+        "timestamp": "2025-09-04T18:38:20.431328",
+        "extraction_analysis": {
+          "total_values_found": 0,
+          "value_types": {},
+          "confidence_distribution": {},
+          "categories_found": [],
+          "sample_values": {}
+        },
+        "recommendations": [
+          "Aucune valeur extraite - vérifier les patterns d'extraction"
+        ]
+      },
+      "task_summary": {
+        "total_urls": 1,
+        "successful_urls": 0,
+        "failed_urls": 1,
+        "success_rate": 0.0,
+        "status": "completed",
+        "analysis_type": "smart_automatic",
+        "strategy_distribution": {
+          "unknown": 1
+        },
+        "average_quality_score": 0,
+        "processing_time": 0,
+        "intelligence_features": {
+          "automatic_strategy": true,
+          "smart_coordination": true,
+          "tunisian_optimization": true
+        }
+      },
+      "improvements": [
+        "Aucune donnée extraite - site peut nécessiter JavaScript",
+        "Considérer l'utilisation de Selenium"
+      ]
+    }
+  },
+  "metadata": {
+    "scraping_method": "fallback_recovery",
+    "error_message": "No content extracted",
+    "timestamp": "2025-09-04T18:36:04.297770",
+    "fallback_reason": "intelligent_scraper_error_recovery",
+    "llm_analysis": {
+      "status": "failed",
+      "fallback_reason": "Error: HTTPConnectionPool(host='ollama', port=11434): Max retries exceeded with url: /api/generate (Caused by ReadTimeoutError(\"HTTPConnectionPool(host='ollama', port=11434): Read timed out. (read timeout=45)\"))",
+      "timestamp": "2025-09-04T18:38:20.431301"
+    },
+    "cohesive_intelligence": {
+      "modules_used": {
+        "helpers": true,
+        "data_validator": true,
+        "temporal_filter": true,
+        "clean_extractor": true,
+        "storage": false,
+        "llm_analysis": true
+      },
+      "usage_stats": {
+        "utils_helpers": 1,
+        "data_validator": 1,
+        "temporal_filter": 1,
+        "clean_extractor": 1,
+        "storage": 1,
+        "llm_analysis": 1
+      },
+      "debug_info": {
+        "url": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique_a.jsp?params=PL212010",
+        "timestamp": "2025-09-04T18:38:20.431328",
+        "extraction_analysis": {
+          "total_values_found": 0,
+          "value_types": {},
+          "confidence_distribution": {},
+          "categories_found": [],
+          "sample_values": {}
+        },
+        "recommendations": [
+          "Aucune valeur extraite - vérifier les patterns d'extraction"
+        ]
+      },
+      "task_summary": {
+        "total_urls": 1,
+        "successful_urls": 0,
+        "failed_urls": 1,
+        "success_rate": 0.0,
+        "status": "completed",
+        "analysis_type": "smart_automatic",
+        "strategy_distribution": {
+          "unknown": 1
+        },
+        "average_quality_score": 0,
+        "processing_time": 0,
+        "intelligence_features": {
+          "automatic_strategy": true,
+          "smart_coordination": true,
+          "tunisian_optimization": true
+        }
+      },
+      "improvement_suggestions": [
+        "Aucune donnée extraite - site peut nécessiter JavaScript",
+        "Considérer l'utilisation de Selenium"
+      ],
+      "tunisian_context": {
+        "tunisian_context": true,
+        "context_strength": "low",
+        "institutional_density": 1,
+        "geographic_density": 0,
+        "economic_density": 0,
+        "numeric_density": 0.0,
+        "temporal_relevance": 0,
+        "tunisian_score": 0.2,
+        "data_richness": "low"
+      },
+      "cohesion_timestamp": "2025-09-04T18:38:20.431733"
+    }
+  },
+  "cohesive_scraper_info": {
+    "scraper_type": "CohesiveIntelligentScraper",
+    "modules_used": [
+      "utils_helpers",
+      "data_validator",
+      "temporal_filter",
+      "clean_extractor",
+      "storage",
+      "llm_analysis"
+    ],
+    "usage_stats": {
+      "utils_helpers": 1,
+      "data_validator": 1,
+      "temporal_filter": 1,
+      "clean_extractor": 1,
+      "storage": 1,
+      "llm_analysis": 1
+    },
+    "timestamp": "2025-09-04T18:38:20.431831"
+  },
+  "storage_metadata": {
+    "task_id": null,
+    "storage_timestamp": "2025-09-04T18:38:20.431851",
+    "storage_version": "2.0_smart",
+    "data_size": 3576,
+    "intelligence_features": true
+  },
+  "normalized_url": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique_a.jsp",
+  "content_classification": {
+    "primary_type": "government_official",
+    "data_richness": "low",
+    "economic_relevance": "unknown"
+  }
+}

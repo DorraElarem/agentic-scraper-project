@@ -1,43 +1,52 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
+"""
+Schémas Pydantic Simplifiés avec Intelligence Automatique
+API unifiée sans complexité - Le système décide automatiquement
+"""
+
+from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 from enum import Enum
-import logging
-
-logger = logging.getLogger(__name__)
+from pydantic import BaseModel, Field, field_validator
+import uuid
 
 # =====================================
-# ENUMS - Définitions de base
+# ÉNUMÉRATIONS SIMPLIFIÉES
 # =====================================
-
-class AnalysisType(str, Enum):
-    STANDARD = "standard"
-    ADVANCED = "advanced"
-    CUSTOM = "custom"
 
 class TaskStatus(str, Enum):
+    """Statuts des tâches de scraping"""
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
 
-class ExtractionMethod(str, Enum):
-    SMART_PATTERN = "smart_pattern"
-    AI_CONTEXTUAL = "ai_contextual_pattern"
-    INTELLIGENT_VALIDATION = "intelligent_validation"
-    UNIVERSAL_ADAPTIVE = "universal_adaptive"
+class AnalysisType(str, Enum):
+    """Types d'analyse (compatibilité)"""
+    STANDARD = "standard"
+    ADVANCED = "advanced"
+    CUSTOM = "custom"
 
 class EconomicCategory(str, Enum):
+    """Catégories économiques tunisiennes"""
+    ECONOMIE_GENERALE = "economie_generale"
     FINANCE_ET_MONNAIE = "finance_et_monnaie"
     PRIX_ET_INFLATION = "prix_et_inflation"
-    COMMERCE_EXTERIEUR = "commerce_exterieur"
-    PRODUCTION_ET_ACTIVITE = "production_et_activite"
     EMPLOI_ET_SALAIRES = "emploi_et_salaires"
-    ECONOMIE_GENERALE = "economie_generale"
+    COMMERCE_EXTERIEUR = "commerce_exterieur"
+    SECTEURS_INSTITUTIONNELS = "secteurs_institutionnels"
+
+class ExtractionMethod(str, Enum):
+    """Méthodes d'extraction pour tracking"""
+    TRADITIONAL = "traditional"
+    INTELLIGENT = "intelligent"
+    SMART_PATTERN = "smart_pattern"
+    AI_CONTEXTUAL = "ai_contextual_pattern"
+    UNIVERSAL_ADAPTIVE = "universal_adaptive"
+    INTELLIGENT_VALIDATION = "intelligent_validation"
 
 # =====================================
-# MODÈLES DE PROGRESSION
+# MODÈLES DE BASE SIMPLIFIÉS
 # =====================================
 
 class ProgressInfo(BaseModel):
@@ -46,297 +55,207 @@ class ProgressInfo(BaseModel):
     total: int = 1
     percentage: float = 0.0
     display: str = "0/1"
-    
-    def update_from_values(self, current: int, total: int = None):
-        """Met à jour la progression à partir de valeurs"""
-        if total is not None:
-            self.total = max(1, total)
-        self.current = max(0, min(current, self.total))
-        self.percentage = round((self.current / self.total) * 100, 2) if self.total > 0 else 0.0
-        self.display = f"{self.current}/{self.total}"
+
+class HealthCheck(BaseModel):
+    """Vérification de santé du système"""
+    healthy: bool = True
+    services: Dict[str, str] = Field(default_factory=dict)
+    coordinator_status: str = "operational"
+    message: Optional[str] = None
+    intelligence_mode: str = "automatic"
+
+class SystemStatus(BaseModel):
+    """Statut système détaillé"""
+    status: str = "healthy"
+    coordinator_active: bool = True
+    scrapers_available: Dict[str, bool] = Field(default_factory=dict)
+    llm_enabled: bool = False
+    features: List[str] = Field(default_factory=list)
+    intelligence_features: Dict[str, bool] = Field(default_factory=lambda: {
+        "automatic_strategy_selection": True,
+        "smart_llm_activation": True,
+        "intelligent_fallbacks": True,
+        "tunisian_optimization": True
+    })
+    message: Optional[str] = None
 
 # =====================================
-# MODÈLES DE CONTENU
+# REQUÊTES SIMPLIFIÉES
 # =====================================
 
-class ScrapedContent(BaseModel):
-    """Contenu scrapé avec métadonnées"""
-    raw_content: str
-    structured_data: Dict[str, Any]
-    metadata: Dict[str, Any]
-
-class ExtractedValue(BaseModel):
-    """Valeur extraite enrichie"""
-    value: float
-    raw_text: str
-    indicator_name: str
-    category: str
-    unit: str
-    unit_description: str = "Unité non spécifiée"
+class ScrapingRequest(BaseModel):
+    """Requête de scraping simplifiée - Intelligence automatique"""
+    urls: List[str] = Field(..., min_length=1, max_length=10, description="URLs à scraper")
+    enable_llm_analysis: bool = Field(False, description="Forcer l'activation LLM (optionnel)")
+    priority: int = Field(1, ge=1, le=10, description="Priorité de la tâche")
+    quality_threshold: float = Field(0.6, ge=0.0, le=1.0, description="Seuil de qualité")
+    callback_url: Optional[str] = Field(None, description="URL de callback")
     
-    # Métadonnées contextuelles
-    context_text: str = ""
-    extraction_method: ExtractionMethod = ExtractionMethod.SMART_PATTERN
-    source_domain: Optional[str] = None
-    extraction_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    @field_validator('urls')
+    @classmethod
+    def validate_urls(cls, v):
+        if not v:
+            raise ValueError("Au moins une URL est requise")
+        
+        valid_urls = []
+        for url in v:
+            url = url.strip()
+            if not url.startswith(('http://', 'https://')):
+                raise ValueError(f"URL invalide: {url}")
+            valid_urls.append(url)
+        
+        return valid_urls
     
-    # Scores de qualité
-    confidence_score: float = 0.0
-    quality_score: float = 0.0
-    
-    # Flags de validation
-    is_target_indicator: bool = False
-    temporal_valid: bool = True
-    validated: bool = False
-
-class ExtractionSummary(BaseModel):
-    """Résumé de l'extraction"""
-    total_values: int = 0
-    categories_found: int = 0
-    target_indicators_found: int = 0
-    validated_indicators: int = 0
-    extraction_method: str = "smart_universal"
-    processing_time: Optional[float] = None
-
-# =====================================
-# MODÈLES DE TÂCHES - VERSION UNIFIÉE
-# =====================================
-
-class TaskResponse(BaseModel):
-    """Réponse de tâche unifiée - NOM PRINCIPAL"""
-    task_id: str
-    status: TaskStatus
-    analysis_type: AnalysisType
-    progress: ProgressInfo
-    results: List[Dict[str, Any]] = []
-    
-    # Métadonnées temporelles
-    created_at: datetime
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    
-    # Gestion d'erreurs
-    error: Optional[str] = None
-    
-    # Configuration et données
-    urls: List[str] = []
-    parameters: Dict[str, Any] = {}
-    metrics: Dict[str, Any] = {}
-    
-    # Informations d'extraction (optionnelles)
-    extraction_summary: Optional[ExtractionSummary] = None
-    settings_compliance: Optional[Dict[str, Any]] = None
-    contextual_insights: Optional[Dict[str, Any]] = None
-    
-    # Propriétés calculées
-    @property
-    def has_error(self) -> bool:
-        return self.error is not None
-    
-    @property
-    def has_results(self) -> bool:
-        return len(self.results) > 0
-    
-    @property
-    def urls_count(self) -> int:
-        return len(self.urls)
-    
-    @property
-    def duration_seconds(self) -> Optional[float]:
-        if self.started_at and self.completed_at:
-            return (self.completed_at - self.started_at).total_seconds()
-        return None
-
-class TaskListResponse(BaseModel):
-    """Réponse de liste de tâches"""
-    tasks: List[TaskResponse]
-    total: int
-    limit: int
-    filter: Dict[str, Any] = {}
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "urls": [],
+                "enable_llm_analysis": True,
+                "priority": 1,
+                "quality_threshold": 0.8
+            }
+        }
+    }
 
 class TaskCreateResponse(BaseModel):
     """Réponse de création de tâche"""
     task_id: str
     status: TaskStatus
-    message: str = "Task created successfully"
+    message: str
+    coordinator_mode: str = "smart_automatic"
+    intelligence_activated: bool = True
 
-# =====================================
-# MODÈLES DE REQUÊTE
-# =====================================
-
-class ScrapeRequest(BaseModel):
-    """Requête de scraping - FORMAT UNIFIÉ"""
-    urls: List[str]
-    analysis_type: AnalysisType = AnalysisType.STANDARD
-    parameters: Dict[str, Any] = {}
-    callback_url: Optional[str] = None
-    priority: int = 1
-    
-    # Options avancées
-    timeout: int = 30
-    enable_intelligent_analysis: bool = True
-    enable_llm_analysis: bool = False
-    quality_threshold: float = 0.6
-
-# =====================================
-# MODÈLES D'ANALYSE
-# =====================================
-
-class AnalysisResult(BaseModel):
-    """Résultat d'analyse enrichi"""
-    indicators: List[Dict[str, Any]]
-    confidence: float
-    analysis_type: AnalysisType
-    insights: Dict[str, Any]
-    
-    # Métadonnées d'analyse
-    processing_time: Optional[float] = None
-    analysis_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-
-# =====================================
-# MODÈLES POUR AGENTS ET SCRAPERS
-# =====================================
-
-class ScrapingResult(BaseModel):
-    """Résultat de scraping pour agents"""
-    url: str
-    content: Optional[ScrapedContent] = None
-    status_code: int = 200
-    metadata: Dict[str, Any] = {}
-    success: bool = True
-    error: Optional[str] = None
-    analysis_type: AnalysisType = AnalysisType.STANDARD
-    llm_analysis: Dict[str, Any] = {}
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-    def dict(self):
-        """Méthode pour sérialisation"""
-        return {
-            'url': self.url,
-            'content': self.content.dict() if self.content else None,
-            'status_code': self.status_code,
-            'metadata': self.metadata,
-            'success': self.success,
-            'error': self.error,
-            'analysis_type': self.analysis_type.value,
-            'llm_analysis': self.llm_analysis,
-            'timestamp': self.timestamp.isoformat()
-        }
-
-class CoordinatorResult(BaseModel):
-    """Résultat du coordinateur"""
+class TaskResponse(BaseModel):
+    """Réponse unifiée de statut de tâche"""
     task_id: str
-    scraping_results: List[ScrapingResult]
-    analysis_results: List[Any] = []  # AnalysisResult depuis analyzer_agent
-    final_insights: Dict[str, Any]
-    status: str
-    total_processing_time: float
-    timestamp: str
-
-# =====================================
-# MODÈLES DE CONFIGURATION
-# =====================================
-
-class ScraperConfiguration(BaseModel):
-    """Configuration du scraper"""
-    delay: float = 1.0
-    timeout: int = 30
-    enable_caching: bool = True
-    max_content_size: int = 100000
+    status: TaskStatus
+    progress: ProgressInfo
+    results: List[Dict[str, Any]] = Field(default_factory=list)
+    created_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    error: Optional[str] = None
+    urls: List[str] = Field(default_factory=list)
     
-    # Options d'extraction
-    extraction_method: str = "smart_universal"
-    validation_threshold: float = 0.6
-    enable_pattern_optimization: bool = True
+    # Métadonnées intelligentes
+    llm_analysis_enabled: bool = False
+    ai_enhanced: bool = False
+    metrics: Dict[str, Any] = Field(default_factory=dict)
+    strategy_used: str = "smart_automatic"
+    coordinator_insights: Dict[str, Any] = Field(default_factory=dict)
+    
+    # Configuration par défaut
+    intelligence_features: Dict[str, bool] = Field(default_factory=lambda: {
+        "automatic_strategy_selection": True,
+        "smart_coordination": True,
+        "tunisian_optimization": True
+    })
 
 # =====================================
-# MODÈLES D'ERREUR
-# =====================================
-
-class ExtractionError(BaseModel):
-    """Erreur d'extraction détaillée"""
-    error_type: str
-    error_message: str
-    url: Optional[str] = None
-    stage: str = "unknown"
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-    recoverable: bool = False
-
-class ValidationError(BaseModel):
-    """Erreur de validation"""
-    field_name: str
-    error_message: str
-    provided_value: Any
-    expected_format: Optional[str] = None
-
-# =====================================
-# MODÈLES POUR L'ANALYSE INTELLIGENTE
+# MODÈLES DE DONNÉES EXTRAITES
 # =====================================
 
 class TemporalMetadata(BaseModel):
-    """Métadonnées temporelles précises"""
+    """Métadonnées temporelles"""
     reference_date: Optional[str] = None
-    period_type: str = "unknown"  # daily, monthly, quarterly, yearly
+    period_type: str = "unknown"
     is_current_period: bool = False
     year: Optional[int] = None
-    month: Optional[str] = None
+    month: Optional[int] = None
     day: Optional[int] = None
 
-class ValidationDetails(BaseModel):
-    """Détails de validation sémantique"""
-    is_economic_indicator: bool = False
-    is_temporally_coherent: bool = False
-    is_value_plausible: bool = False
-    has_institutional_backing: bool = False
-    semantic_score: float = 0.0
-
 class EconomicCoherence(BaseModel):
-    """Analyse de cohérence économique"""
+    """Cohérence économique des données"""
     is_economically_plausible: bool = True
-    value_range_check: str = "unknown"
+    value_range_check: str = "normal"
     context_consistency: bool = True
     temporal_alignment: bool = True
 
+class ValidationDetails(BaseModel):
+    """Détails de validation"""
+    is_economic_indicator: bool = False
+    is_temporally_coherent: bool = True
+    is_value_plausible: bool = True
+    has_institutional_backing: bool = False
+    semantic_score: float = 0.0
+
 class EnhancedExtractedValue(BaseModel):
-    """Valeur extraite enrichie avec contexte complet"""
-    # Données de base
-    value: float
+    """Valeur extraite enrichie avec intelligence automatique"""
+    value: Union[float, int, str]
     raw_text: str
     indicator_name: str
-    category: str
-    unit: str
-    unit_description: str = "Unité non spécifiée"
-    
-    # Enrichissement contextuel
     enhanced_indicator_name: Optional[str] = None
+    category: str = EconomicCategory.ECONOMIE_GENERALE.value
+    unit: str = ""
+    unit_description: str = "Unité non spécifiée"
     context_text: str = ""
     extraction_method: ExtractionMethod = ExtractionMethod.SMART_PATTERN
-    source_domain: Optional[str] = None
+    source_domain: str
     extraction_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     
-    # Métadonnées avancées
+    # Métadonnées enrichies
     temporal_metadata: Optional[TemporalMetadata] = None
     institutional_source: Optional[str] = None
-    economic_coherence: Optional[EconomicCoherence] = None
+    economic_coherence: EconomicCoherence = Field(default_factory=EconomicCoherence)
     
-    # Scores de qualité
-    confidence_score: float = 0.0
-    semantic_quality: float = 0.0
-    overall_validation_score: float = 0.0
-    quality_score: float = 0.0
+    # Scores de qualité automatiques
+    confidence_score: float = Field(0.0, ge=0.0, le=1.0)
+    semantic_quality: float = Field(0.0, ge=0.0, le=1.0)
+    overall_validation_score: float = Field(0.0, ge=0.0, le=1.0)
+    quality_score: float = Field(0.0, ge=0.0, le=1.0)
     
-    # Flags de validation
+    # Indicateurs de validation
     is_target_indicator: bool = False
     temporal_valid: bool = True
     validated: bool = False
     is_real_indicator: bool = True
-    
-    # Détails de validation
-    validation_details: Optional[ValidationDetails] = None
+    validation_details: ValidationDetails = Field(default_factory=ValidationDetails)
     pattern_index: Optional[int] = None
 
+# =====================================
+# MODÈLES D'ANALYSE INTELLIGENTE
+# =====================================
+
+class DataSummary(BaseModel):
+    """Résumé des données extraites"""
+    total_indicators: int = 0
+    validated_indicators: int = 0
+    categories_found: List[str] = Field(default_factory=list)
+    time_periods_covered: List[str] = Field(default_factory=list)
+    sources_identified: List[str] = Field(default_factory=list)
+
+class QualityAssessment(BaseModel):
+    """Évaluation automatique de qualité"""
+    average_quality: float = 0.0
+    high_quality_indicators: int = 0
+    temporal_coherence: bool = True
+    data_completeness: float = 0.0
+
+class TemporalAnalysis(BaseModel):
+    """Analyse temporelle automatique"""
+    periods_found: int = 0
+    most_recent: Optional[int] = None
+    period_types: List[str] = Field(default_factory=list)
+
+class LLMAnalysis(BaseModel):
+    """Analyse LLM intelligente"""
+    insights: Dict[str, Any] = Field(default_factory=dict)
+    llm_status: str = "not_configured"
+    recommendations: List[str] = Field(default_factory=list)
+    economic_context: Optional[str] = None
+    trend_analysis: Optional[str] = None
+
+class SmartInsights(BaseModel):
+    """Insights intelligents automatiques"""
+    data_summary: DataSummary = Field(default_factory=DataSummary)
+    quality_assessment: QualityAssessment = Field(default_factory=QualityAssessment)
+    indicator_analysis: Dict[str, Any] = Field(default_factory=dict)
+    temporal_analysis: TemporalAnalysis = Field(default_factory=TemporalAnalysis)
+    recommendations: List[str] = Field(default_factory=list)
+    llm_analysis: LLMAnalysis = Field(default_factory=LLMAnalysis)
+
 class SettingsCompliance(BaseModel):
-    """Évaluation de conformité aux settings"""
+    """Conformité aux settings du projet"""
     target_indicators_compliance: bool = False
     recognized_units_compliance: bool = False
     temporal_compliance: bool = False
@@ -344,19 +263,32 @@ class SettingsCompliance(BaseModel):
     validation_compliance: bool = False
     overall_compliance_score: float = 0.0
     compliant: bool = False
-    details: Optional[str] = None
+    details: str = ""
+
+# =====================================
+# MODÈLES DE CONTENU
+# =====================================
 
 class SourceAnalysis(BaseModel):
-    """Analyse de la source"""
+    """Analyse intelligente de la source"""
     domain: str
     is_government: bool = False
     is_trusted_source: bool = False
     content_type: str = "general"
-    language: str = "unknown"
+    language: str = "french"
     data_freshness: str = "unknown"
 
+class ExtractionSummary(BaseModel):
+    """Résumé d'extraction intelligent"""
+    total_values: int = 0
+    categories_found: int = 0
+    target_indicators_found: int = 0
+    validated_indicators: int = 0
+    extraction_method: str = "smart_automatic"
+    processing_time: float = 0.0
+
 class ExtractionQuality(BaseModel):
-    """Métriques de qualité d'extraction"""
+    """Qualité d'extraction automatique"""
     total_extracted: int = 0
     high_quality_count: int = 0
     target_indicators_found: int = 0
@@ -364,202 +296,150 @@ class ExtractionQuality(BaseModel):
     average_confidence: float = 0.0
 
 class ProcessingInfo(BaseModel):
-    """Informations de traitement"""
-    scraper_version: str = "smart_universal_v2.0"
+    """Informations de traitement intelligent"""
+    scraper_version: str = "2.0_smart_unified"
     extraction_method: str = "intelligent_patterns"
     validation_enabled: bool = True
     ai_enhanced: bool = False
-    context_enriched: bool = False
-    semantic_validation: bool = False
+    context_enriched: bool = True
+    semantic_validation: bool = True
 
-# =====================================
-# MODÈLES POUR L'ANALYSE LLM
-# =====================================
+class ScrapedContent(BaseModel):
+    raw_content: Optional[str] = None
+    structured_data: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    
+    @property
+    def indicators(self) -> List[Dict[str, Any]]:
+        """Retourne la liste des indicateurs extraits"""
+        extracted_values = self.structured_data.get('extracted_values', {})
+        if isinstance(extracted_values, dict):
+            return list(extracted_values.values())
+        return []
 
-class DataSummary(BaseModel):
-    """Résumé intelligent des données"""
+class AnalysisResult(BaseModel):
+    """Résultat d'analyse intelligent complet"""
+    success: bool = True
     total_indicators: int = 0
     validated_indicators: int = 0
-    categories_found: List[str] = []
-    time_periods_covered: List[str] = []
-    sources_identified: List[str] = []
-
-class QualityAssessment(BaseModel):
-    """Évaluation de la qualité des données"""
-    average_quality: float = 0.0
     high_quality_indicators: int = 0
-    temporal_coherence: bool = True
-    data_completeness: float = 0.0
-
-class IndicatorAnalysis(BaseModel):
-    """Analyse des indicateurs par catégorie"""
-    finance_et_monnaie: List[Dict[str, Any]] = []
-    prix_et_inflation: List[Dict[str, Any]] = []
-    commerce_exterieur: List[Dict[str, Any]] = []
-    production_et_activite: List[Dict[str, Any]] = []
-    emploi_et_salaires: List[Dict[str, Any]] = []
-    economie_generale: List[Dict[str, Any]] = []
-
-class TemporalAnalysis(BaseModel):
-    """Analyse des patterns temporels"""
-    periods_found: int = 0
-    most_recent: Optional[int] = None
-    period_types: List[str] = []
-
-class DataCoherence(BaseModel):
-    """Analyse de cohérence des données"""
-    temporal_consistency: bool = True
-    value_ranges_realistic: bool = True
-    indicator_coverage: Dict[str, int] = {}
-    data_quality_score: float = 0.0
-
-class LLMAnalysis(BaseModel):
-    """Analyse LLM (Ollama/Mistral)"""
-    insights: Dict[str, Any] = {}
-    llm_status: str = "not_configured"
-    recommendations: List[str] = []
-    economic_context: Optional[str] = None
-    trend_analysis: Optional[str] = None
-
-class SmartInsights(BaseModel):
-    """Insights intelligents complets"""
-    data_summary: DataSummary
-    quality_assessment: QualityAssessment
-    indicator_analysis: Dict[str, List[Dict[str, Any]]]
-    temporal_analysis: TemporalAnalysis
-    recommendations: List[str]
-    llm_analysis: LLMAnalysis
+    average_quality_score: float = 0.0
+    extraction_method: str = "intelligent_automatic"
+    processing_time: float = 0.0
+    
+    # Données extraites
+    extracted_values: List[EnhancedExtractedValue] = Field(default_factory=list)
+    
+    # Analyses intelligentes
+    insights: SmartInsights = Field(default_factory=SmartInsights)
+    source_analysis: Optional[SourceAnalysis] = None
+    extraction_summary: ExtractionSummary = Field(default_factory=ExtractionSummary)
+    extraction_quality: ExtractionQuality = Field(default_factory=ExtractionQuality)
+    processing_info: ProcessingInfo = Field(default_factory=ProcessingInfo)
+    
+    # Conformité et validation
+    settings_compliance: SettingsCompliance = Field(default_factory=SettingsCompliance)
+    
+    # Métadonnées
+    analysis_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    source_url: Optional[str] = None
+    error_message: Optional[str] = None
+    warnings: List[str] = Field(default_factory=list)
+    
+    # Intelligence automatique
+    intelligence_metadata: Dict[str, Any] = Field(default_factory=lambda: {
+        "automatic_analysis": True,
+        "smart_categorization": True,
+        "tunisian_optimization": True,
+        "llm_enhanced": False
+    })
+    
+    # Contenu original
+    scraped_content: Optional[ScrapedContent] = None
 
 # =====================================
-# MODÈLES ÉTENDUS POUR LES MÉTRIQUES
+# MODÈLES DE COMPATIBILITÉ
 # =====================================
 
-class ExtendedTaskMetrics(BaseModel):
-    """Métriques étendues de tâche"""
-    extraction_time: Optional[float] = None
-    analysis_time: Optional[float] = None
-    total_processing_time: Optional[float] = None
-    urls_processed: int = 0
-    indicators_extracted: int = 0
-    quality_score: float = 0.0
-    compliance_score: float = 0.0
+class ExtractedValue(BaseModel):
+    """Valeur extraite simple (compatibilité)"""
+    indicator_name: str
+    value: Union[float, int, str]
+    unit: str = ""
+    confidence_score: float = 0.0
+    source_domain: str
+    extraction_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
 
-class TaskResult(BaseModel):
-    """Résultat de tâche complet - VERSION ÉTENDUE"""
+class SimpleTaskResult(BaseModel):
+    """Résultat de tâche simplifié"""
     task_id: str
-    status: TaskStatus
-    progress: ProgressInfo
-    analysis_type: AnalysisType
-    results: List[Dict[str, Any]] = []
-    
-    # Métadonnées temporelles
-    created_at: datetime
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    
-    # Gestion d'erreurs
-    error: Optional[str] = None
-    
-    # Métriques avancées
-    metrics: Dict[str, Any] = {}
-    extended_metrics: Optional[ExtendedTaskMetrics] = None
-    
-    # Configuration et URLs
-    urls: List[str] = []
-    parameters: Dict[str, Any] = {}
-    
-    # Résultats enrichis
-    extraction_summary: Optional[ExtractionSummary] = None
-    settings_compliance: Optional[SettingsCompliance] = None
-    contextual_insights: Optional[SmartInsights] = None
-    
-    # Propriétés calculées
-    @property
-    def has_error(self) -> bool:
-        return self.error is not None
-    
-    @property
-    def has_results(self) -> bool:
-        return len(self.results) > 0
-    
-    @property
-    def urls_count(self) -> int:
-        return len(self.urls)
-    
-    @property
-    def duration_seconds(self) -> Optional[float]:
-        if self.started_at and self.completed_at:
-            return (self.completed_at - self.started_at).total_seconds()
-        return None
+    status: str
+    urls_processed: int = 0
+    results_found: int = 0
+    processing_time: float = 0.0
+    success_rate: float = 0.0
+    intelligence_used: bool = True
 
 # =====================================
-# MODÈLES DE REQUÊTE ÉTENDUS
+# MODÈLES POUR COORDINATION INTELLIGENTE
 # =====================================
 
-class ScrapingRequest(BaseModel):
-    """Requête de scraping enrichie"""
-    urls: List[str]
-    analysis_type: AnalysisType = AnalysisType.STANDARD
-    parameters: Dict[str, Any] = {}
-    timeout: int = 30
-    depth: int = 1
-    callback_url: Optional[str] = None
-    priority: int = 5
-    
-    # Options avancées
-    enable_intelligent_analysis: bool = True
-    enable_llm_analysis: bool = False
-    enable_semantic_validation: bool = True
-    quality_threshold: float = 0.6
-    
-    # Contraintes personnalisées
-    custom_indicators: Optional[List[str]] = None
-    custom_time_range: Optional[Dict[str, Any]] = None
+class CoordinatorStatus(BaseModel):
+    """Statut du coordinateur intelligent"""
+    coordinator_type: str = "SmartScrapingCoordinator"
+    version: str = "2.0_automatic"
+    available_strategies: List[str] = Field(default_factory=lambda: ["traditional", "intelligent"])
+    auto_selection_enabled: bool = True
+    fallback_enabled: bool = True
+    performance_tracking: bool = True
+    tunisian_optimization: bool = True
 
-class AnalysisRequest(BaseModel):
-    """Requête d'analyse spécialisée"""
-    content: str
-    url: str
-    analysis_type: AnalysisType = AnalysisType.ADVANCED
-    enable_context_enrichment: bool = True
-    enable_validation: bool = True
+class ScrapingStrategy(BaseModel):
+    """Stratégie de scraping automatique"""
+    strategy_name: str
+    reason: str
+    confidence: float = 0.0
+    fallback_available: bool = True
+    expected_performance: str = "good"
 
-# =====================================
-# EXPORTS ET ALIASES DE COMPATIBILITÉ
-# =====================================
+class IntelligenceReport(BaseModel):
+    """Rapport d'intelligence du système"""
+    total_operations: int = 0
+    success_rate: float = 0.0
+    strategy_distribution: Dict[str, int] = Field(default_factory=dict)
+    llm_activation_rate: float = 0.0
+    tunisian_sources_processed: int = 0
+    average_processing_time: float = 0.0
+    performance_level: str = "optimal"
+    recommendations: List[str] = Field(default_factory=list)
 
-# Aliases pour rétrocompatibilité (mais TaskResponse est le nom principal)
-TaskProgress = ProgressInfo
+# Alias pour compatibilité
+ScrapeRequest = ScrapingRequest
 
-# Exports principaux
+# Export des classes principales
 __all__ = [
-    # Enums
-    "AnalysisType", "TaskStatus", "ExtractionMethod", "EconomicCategory",
+    # Énumérations
+    'TaskStatus', 'EconomicCategory', 'ExtractionMethod', 'AnalysisType',
     
-    # Modèles principaux de tâches
-    "TaskResponse", "TaskResult", "TaskListResponse", "TaskCreateResponse", 
-    "ScrapeRequest", "ScrapingRequest", "ProgressInfo", "TaskProgress",
+    # Modèles de base
+    'ProgressInfo', 'HealthCheck', 'SystemStatus',
     
-    # Modèles de contenu
-    "ScrapedContent", "ExtractedValue", "EnhancedExtractedValue",
+    # Requêtes/Réponses
+    'ScrapingRequest', 'ScrapeRequest', 'TaskCreateResponse', 'TaskResponse',
     
-    # Modèles d'analyse
-    "AnalysisResult", "AnalysisRequest", "ExtractionSummary",
+    # Données extraites
+    'EnhancedExtractedValue', 'TemporalMetadata', 'EconomicCoherence', 'ValidationDetails',
     
-    # Modèles pour agents
-    "ScrapingResult", "CoordinatorResult",
+    # Analyse intelligente
+    'SmartInsights', 'DataSummary', 'QualityAssessment', 'LLMAnalysis', 'SettingsCompliance',
+    'AnalysisResult', 'TemporalAnalysis',
     
-    # Modèles d'analyse intelligente
-    "TemporalMetadata", "ValidationDetails", "EconomicCoherence",
-    "SettingsCompliance", "SourceAnalysis", "ExtractionQuality", "ProcessingInfo",
+    # Contenu
+    'ScrapedContent', 'SourceAnalysis', 'ExtractionSummary', 'ExtractionQuality', 'ProcessingInfo',
     
-    # Modèles LLM et insights
-    "DataSummary", "QualityAssessment", "IndicatorAnalysis", "TemporalAnalysis",
-    "DataCoherence", "LLMAnalysis", "SmartInsights",
+    # Coordination intelligente
+    'CoordinatorStatus', 'ScrapingStrategy', 'IntelligenceReport', 'SimpleTaskResult',
     
-    # Configuration et erreurs
-    "ScraperConfiguration", "ExtractionError", "ValidationError",
-    
-    # Métriques étendues
-    "ExtendedTaskMetrics"
+    # Compatibilité
+    'ExtractedValue'
 ]

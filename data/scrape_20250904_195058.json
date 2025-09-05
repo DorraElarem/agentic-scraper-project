@@ -1,0 +1,333 @@
+{
+  "url": "https://api.worldbank.org/v2/countries/TN/indicators/NY.GDP.MKTP.CD?format=json",
+  "content": "[{\"page\":1,\"pages\":2,\"per_page\":50,\"total\":65,\"sourceid\":\"2\",\"lastupdated\":\"2025-07-01\"},[{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2024\",\"value\":53409988744.5968,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2023\",\"value\":48196281783.9479,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2022\",\"value\":44948769171.285,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2021\",\"value\":47073234359.1819,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2020\",\"value\":42491780918.361,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2019\",\"value\":41905642418.825,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2018\",\"value\":42686504459.801,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2017\",\"value\":42163530590.9462,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2016\",\"value\":44360072680.4476,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2015\",\"value\":45779494041.9295,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2014\",\"value\":50271812920.612,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2013\",\"value\":48685446413.953,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2012\",\"value\":47311401812.6733,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2011\",\"value\":48123325825.0739,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2010\",\"value\":46206091937.9628,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2009\",\"value\":43455740497.3061,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2008\",\"value\":44859439902.2191,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2007\",\"value\":38915353866.757,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2006\",\"value\":34376664600.5898,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2005\",\"value\":32272186694.8043,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2004\",\"value\":31183885241.4396,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2003\",\"value\":27453902261.4629,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2002\",\"value\":23141616604.5242,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2001\",\"value\":22065832448.8623,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"2000\",\"value\":21473528160.7782,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1999\",\"value\":22943202174.9668,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1998\",\"value\":21802893587.126,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1997\",\"value\":20746210353.845,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1996\",\"value\":19587161806.7655,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1995\",\"value\":18030876599.3444,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1994\",\"value\":15633174304.0905,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1993\",\"value\":14608335608.1543,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1992\",\"value\":15496708060.4184,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1991\",\"value\":13074782608.6957,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1990\",\"value\":12290568181.8182,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1989\",\"value\":10101851744.5627,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1988\",\"value\":10096245762.4352,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1987\",\"value\":9696715910.70907,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1986\",\"value\":9017806654.4169,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1985\",\"value\":8410226052.6114,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1984\",\"value\":8254541194.82566,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1983\",\"value\":8350582747.83541,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1982\",\"value\":8133580051.70251,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1981\",\"value\":8428445294.08429,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1980\",\"value\":8744134354.16152,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1979\",\"value\":7188863903.63675,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1978\",\"value\":5968460080.1113,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1977\",\"value\":5109324009.32401,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1976\",\"value\":4508191942.16081,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0},{\"indicator\":{\"id\":\"NY.GDP.MKTP.CD\",\"value\":\"GDP (current US$)\"},\"country\":{\"id\":\"TN\",\"value\":\"Tunisia\"},\"countryiso3code\":\"TUN\",\"date\":\"1975\",\"value\":4328965587.53266,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":0}]]",
+  "structured_data": {
+    "extracted_values": {
+      "validated_0": {
+        "value": 53409988744.5968,
+        "raw_text": "",
+        "indicator_name": "GDP (current US$) Tunisia 2024",
+        "enhanced_indicator_name": "[VALIDATED] GDP (current US$) Tunisia 2024",
+        "category": "FISCAL",
+        "unit": "USD",
+        "unit_description": "Dollars Américains",
+        "context_text": "",
+        "extraction_method": "validated_traditional",
+        "source_domain": "api.worldbank.org",
+        "extraction_timestamp": "2025-09-04T19:50:58.605862",
+        "confidence_score": 1.0,
+        "is_economic_indicator": true,
+        "is_target_indicator": true,
+        "validated": true,
+        "year": 2024,
+        "period_type": "annual",
+        "temporal_context": "2024-validated",
+        "quality_score": 1.0,
+        "semantic_quality": 0.8,
+        "cohesive_processing": true,
+        "validation_passed": true,
+        "cohesive_enrichment": {
+          "processing_timestamp": "2025-09-04T19:50:58.606412",
+          "enrichment_version": "cohesive_v1.0",
+          "all_utils_applied": true,
+          "source_url": "https://api.worldbank.org/v2/countries/TN/indicators/NY.GDP.MKTP.CD?format=json"
+        }
+      },
+      "validated_1": {
+        "value": 48196281783.9479,
+        "raw_text": "",
+        "indicator_name": "GDP (current US$) Tunisia 2023",
+        "enhanced_indicator_name": "[VALIDATED] GDP (current US$) Tunisia 2023",
+        "category": "FISCAL",
+        "unit": "USD",
+        "unit_description": "Dollars Américains",
+        "context_text": "",
+        "extraction_method": "validated_traditional",
+        "source_domain": "api.worldbank.org",
+        "extraction_timestamp": "2025-09-04T19:50:58.606002",
+        "confidence_score": 1.0,
+        "is_economic_indicator": true,
+        "is_target_indicator": true,
+        "validated": true,
+        "year": 2023,
+        "period_type": "annual",
+        "temporal_context": "2023-validated",
+        "quality_score": 1.0,
+        "semantic_quality": 0.8,
+        "cohesive_processing": true,
+        "validation_passed": true,
+        "cohesive_enrichment": {
+          "processing_timestamp": "2025-09-04T19:50:58.606425",
+          "enrichment_version": "cohesive_v1.0",
+          "all_utils_applied": true,
+          "source_url": "https://api.worldbank.org/v2/countries/TN/indicators/NY.GDP.MKTP.CD?format=json"
+        }
+      },
+      "validated_2": {
+        "value": 44948769171.285,
+        "raw_text": "",
+        "indicator_name": "GDP (current US$) Tunisia 2022",
+        "enhanced_indicator_name": "[VALIDATED] GDP (current US$) Tunisia 2022",
+        "category": "FISCAL",
+        "unit": "USD",
+        "unit_description": "Dollars Américains",
+        "context_text": "",
+        "extraction_method": "validated_traditional",
+        "source_domain": "api.worldbank.org",
+        "extraction_timestamp": "2025-09-04T19:50:58.606028",
+        "confidence_score": 1.0,
+        "is_economic_indicator": true,
+        "is_target_indicator": true,
+        "validated": true,
+        "year": 2022,
+        "period_type": "annual",
+        "temporal_context": "2022-validated",
+        "quality_score": 1.0,
+        "semantic_quality": 0.8,
+        "cohesive_processing": true,
+        "validation_passed": true,
+        "cohesive_enrichment": {
+          "processing_timestamp": "2025-09-04T19:50:58.606429",
+          "enrichment_version": "cohesive_v1.0",
+          "all_utils_applied": true,
+          "source_url": "https://api.worldbank.org/v2/countries/TN/indicators/NY.GDP.MKTP.CD?format=json"
+        }
+      },
+      "validated_3": {
+        "value": 47073234359.1819,
+        "raw_text": "",
+        "indicator_name": "GDP (current US$) Tunisia 2021",
+        "enhanced_indicator_name": "[VALIDATED] GDP (current US$) Tunisia 2021",
+        "category": "FISCAL",
+        "unit": "USD",
+        "unit_description": "Dollars Américains",
+        "context_text": "",
+        "extraction_method": "validated_traditional",
+        "source_domain": "api.worldbank.org",
+        "extraction_timestamp": "2025-09-04T19:50:58.606049",
+        "confidence_score": 1.0,
+        "is_economic_indicator": true,
+        "is_target_indicator": true,
+        "validated": true,
+        "year": 2021,
+        "period_type": "annual",
+        "temporal_context": "2021-validated",
+        "quality_score": 1.0,
+        "semantic_quality": 0.8,
+        "cohesive_processing": true,
+        "validation_passed": true,
+        "cohesive_enrichment": {
+          "processing_timestamp": "2025-09-04T19:50:58.606573",
+          "enrichment_version": "cohesive_v1.0",
+          "all_utils_applied": true,
+          "source_url": "https://api.worldbank.org/v2/countries/TN/indicators/NY.GDP.MKTP.CD?format=json"
+        }
+      },
+      "validated_4": {
+        "value": 42491780918.361,
+        "raw_text": "",
+        "indicator_name": "GDP (current US$) Tunisia 2020",
+        "enhanced_indicator_name": "[VALIDATED] GDP (current US$) Tunisia 2020",
+        "category": "FISCAL",
+        "unit": "USD",
+        "unit_description": "Dollars Américains",
+        "context_text": "",
+        "extraction_method": "validated_traditional",
+        "source_domain": "api.worldbank.org",
+        "extraction_timestamp": "2025-09-04T19:50:58.606070",
+        "confidence_score": 1.0,
+        "is_economic_indicator": true,
+        "is_target_indicator": true,
+        "validated": true,
+        "year": 2020,
+        "period_type": "annual",
+        "temporal_context": "2020-validated",
+        "quality_score": 1.0,
+        "semantic_quality": 0.8,
+        "cohesive_processing": true,
+        "validation_passed": true,
+        "cohesive_enrichment": {
+          "processing_timestamp": "2025-09-04T19:50:58.606578",
+          "enrichment_version": "cohesive_v1.0",
+          "all_utils_applied": true,
+          "source_url": "https://api.worldbank.org/v2/countries/TN/indicators/NY.GDP.MKTP.CD?format=json"
+        }
+      },
+      "validated_5": {
+        "value": 41905642418.825,
+        "raw_text": "",
+        "indicator_name": "GDP (current US$) Tunisia 2019",
+        "enhanced_indicator_name": "[VALIDATED] GDP (current US$) Tunisia 2019",
+        "category": "FISCAL",
+        "unit": "USD",
+        "unit_description": "Dollars Américains",
+        "context_text": "",
+        "extraction_method": "validated_traditional",
+        "source_domain": "api.worldbank.org",
+        "extraction_timestamp": "2025-09-04T19:50:58.606091",
+        "confidence_score": 1.0,
+        "is_economic_indicator": true,
+        "is_target_indicator": true,
+        "validated": true,
+        "year": 2019,
+        "period_type": "annual",
+        "temporal_context": "2019-validated",
+        "quality_score": 1.0,
+        "semantic_quality": 0.8,
+        "cohesive_processing": true,
+        "validation_passed": true,
+        "cohesive_enrichment": {
+          "processing_timestamp": "2025-09-04T19:50:58.606582",
+          "enrichment_version": "cohesive_v1.0",
+          "all_utils_applied": true,
+          "source_url": "https://api.worldbank.org/v2/countries/TN/indicators/NY.GDP.MKTP.CD?format=json"
+        }
+      },
+      "validated_6": {
+        "value": 42686504459.801,
+        "raw_text": "",
+        "indicator_name": "GDP (current US$) Tunisia 2018",
+        "enhanced_indicator_name": "[VALIDATED] GDP (current US$) Tunisia 2018",
+        "category": "FISCAL",
+        "unit": "USD",
+        "unit_description": "Dollars Américains",
+        "context_text": "",
+        "extraction_method": "validated_traditional",
+        "source_domain": "api.worldbank.org",
+        "extraction_timestamp": "2025-09-04T19:50:58.606109",
+        "confidence_score": 1.0,
+        "is_economic_indicator": true,
+        "is_target_indicator": true,
+        "validated": true,
+        "year": 2018,
+        "period_type": "annual",
+        "temporal_context": "2018-validated",
+        "quality_score": 1.0,
+        "semantic_quality": 0.8,
+        "cohesive_processing": true,
+        "validation_passed": true,
+        "cohesive_enrichment": {
+          "processing_timestamp": "2025-09-04T19:50:58.606585",
+          "enrichment_version": "cohesive_v1.0",
+          "all_utils_applied": true,
+          "source_url": "https://api.worldbank.org/v2/countries/TN/indicators/NY.GDP.MKTP.CD?format=json"
+        }
+      }
+    },
+    "extraction_summary": {
+      "total_values": 7,
+      "categories_found": 1,
+      "target_indicators_found": 7,
+      "validated_indicators": 7,
+      "extraction_method": "cohesive_traditional",
+      "processing_time": 1.614
+    },
+    "source_analysis": {
+      "domain": "api.worldbank.org",
+      "is_government": false,
+      "is_trusted_source": true,
+      "content_type": "api_data",
+      "language": "english",
+      "data_freshness": "periodic"
+    },
+    "extraction_quality": {
+      "total_extracted": 59,
+      "high_quality_count": 7,
+      "target_indicators_found": 7,
+      "categories_covered": 1,
+      "average_confidence": 1.0
+    },
+    "processing_info": {
+      "scraper_version": "cohesive_traditional_v1.0",
+      "extraction_method": "cohesive_comprehensive",
+      "validation_enabled": true,
+      "ai_enhanced": false,
+      "context_enriched": true,
+      "semantic_validation": true
+    },
+    "post_processing_info": {
+      "temporal_filtering_applied": true,
+      "validation_applied": true,
+      "enrichment_applied": true,
+      "original_count": 59,
+      "filtered_count": 16,
+      "validated_count": 7,
+      "final_count": 7,
+      "validation_summary": {
+        "total_input": 16,
+        "valid_output": 7,
+        "rejected_total": 9,
+        "rejected_outside_period": 0,
+        "rejected_no_year": 0,
+        "rejected_patterns": 9,
+        "rejected_validation_errors": 0,
+        "success_rate": 43.75,
+        "validation_mode": "strict_temporal_2018_2025",
+        "target_period": "2018-2025"
+      },
+      "processing_timestamp": "2025-09-04T19:50:58.606620"
+    },
+    "cohesive_integration": {
+      "all_utils_integrated": true,
+      "module_usage_stats": {
+        "helpers": 2,
+        "data_validator": 1,
+        "temporal_filter": 1,
+        "clean_extractor": 1,
+        "storage": 1
+      },
+      "cohesive_version": "v1.0_complete"
+    }
+  },
+  "metadata": {
+    "url": "https://api.worldbank.org/v2/countries/TN/indicators/NY.GDP.MKTP.CD?format=json",
+    "scraping_timestamp": "2025-09-04T19:50:58.606941",
+    "execution_time": 1.614,
+    "scraper_type": "CohesiveTunisianWebScraper",
+    "scraper_version": "cohesive_v1.0",
+    "content_type": "api_data",
+    "content_length": 10429,
+    "source_domain": "api.worldbank.org",
+    "cohesive_features": {
+      "all_utils_integrated": true,
+      "helpers_used": true,
+      "data_validator_used": true,
+      "temporal_filter_used": true,
+      "clean_extractor_used": true,
+      "storage_used": false
+    },
+    "pdf_extraction_available": true,
+    "excel_extraction_available": true
+  },
+  "cohesive_scraper_info": {
+    "scraper_type": "CohesiveTunisianWebScraper",
+    "modules_used": [
+      "helpers",
+      "data_validator",
+      "temporal_filter",
+      "clean_extractor",
+      "storage"
+    ],
+    "usage_stats": {
+      "helpers": 2,
+      "data_validator": 1,
+      "temporal_filter": 1,
+      "clean_extractor": 1,
+      "storage": 1
+    },
+    "timestamp": "2025-09-04T19:50:58.607013"
+  },
+  "storage_metadata": {
+    "task_id": null,
+    "storage_timestamp": "2025-09-04T19:50:58.607032",
+    "storage_version": "2.0_smart",
+    "data_size": 21706,
+    "intelligence_features": true
+  },
+  "normalized_url": "https://api.worldbank.org/v2/countries/TN/indicators/NY.GDP.MKTP.CD",
+  "content_classification": {
+    "primary_type": "api_data",
+    "data_richness": "medium",
+    "economic_relevance": "high"
+  }
+}

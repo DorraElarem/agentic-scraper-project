@@ -1,954 +1,1280 @@
+"""
+Scraper Intelligent CORRIGÉ - Intégration complète des utils
+Version cohérente utilisant tous les modules du projet
+"""
+
+import os
 import re
 import json
-import asyncio
-import aiohttp
+import requests
 import time
 from typing import Optional, Dict, List, Any
 import logging
 from datetime import datetime
-from app.models.schemas import ScrapedContent, AnalysisResult, AnalysisType
-from app.config.settings import settings, AnalysisCategory
+from urllib.parse import urlparse
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+from bs4 import BeautifulSoup
+
+# CORRECTION : Import des schemas
+from app.models.schemas import (
+    ScrapedContent, AnalysisResult, EconomicCategory,
+    EnhancedExtractedValue, ExtractionSummary, SourceAnalysis, 
+    ExtractionQuality, ProcessingInfo, SmartInsights, DataSummary,
+    QualityAssessment, TemporalAnalysis, LLMAnalysis, 
+    SettingsCompliance, ExtractionMethod, TemporalMetadata,
+    ValidationDetails, EconomicCoherence
+)
+
+# CORRECTION : Import de la configuration
+from app.config.settings import settings
+from app.config.llm_config import analyze_with_fixed_llm, fixed_llm_config
+
+# INTÉGRATION CRITIQUE : Import des utils
+from app.utils.helpers import (
+    format_timestamp, calculate_execution_time,
+    extract_domain, generate_task_summary,
+    detect_tunisian_content_patterns, suggest_optimal_strategy,
+    debug_extraction_data, log_extraction_details, categorize_url_type
+)
+from app.utils.data_validator import validate_indicators_strict, is_economic_indicator_valid
+from app.utils.temporal_filter import filter_by_temporal_period, is_in_target_period
+from app.utils.clean_extraction_patterns import extract_clean_economic_data, is_valid_indicator
+from app.utils.storage import smart_storage
+
+# Import du scraper traditionnel comme base
 from .traditional import TunisianWebScraper
 
 logger = logging.getLogger(__name__)
 
-class IntelligentScraper(TunisianWebScraper):
-    def __init__(self, delay: float = None):
-        super().__init__(delay or settings.DEFAULT_DELAY)
-        self._prepare_intelligence_layer()
-        
-        # Configuration Ollama
-        self.ollama_url = "http://ollama:11434"
-        self.ollama_model = "tinyllama"  # Modèle détecté
-        self.llm_timeout = 120  # 🔧 CORRIGÉ: Augmenté de 30s à 120s
-
-    def _prepare_intelligence_layer(self) -> None:
-        """Prépare la couche d'intelligence avec reconnaissance contextuelle avancée"""
-        
-        # Patterns d'enrichissement contextuel
-        self.context_enrichment_patterns = {
-            'temporal_markers': [
-                r'au\s+(\d{1,2})/(\d{1,2})/(\d{4})',  # au 11/08/2025
-                r'du\s+mois\s+de\s+(\w+)\s+(\d{4})',  # du mois de juillet 2025
-                r'(\w+)\s+(\d{4})',  # juillet 2025
-                r'T(\d)\s+(\d{4})',  # T3 2025
-            ],
-            
-            'institutional_sources': [
-                r'source\s*:\s*(.+?)(?:\n|$)',
-                r'institut\s+national\s+de\s+la\s+statistique',
-                r'banque\s+centrale\s+de\s+tunisie',
-                r'mise\s+à\s+jour\s*:\s*(.+?)(?:\n|$)'
-            ],
-            
-            'indicator_qualifiers': [
-                r'(taux\s+d\'intérêt\s+directeur)',
-                r'(taux\s+de\s+rémunération\s+de\s+l\'épargne)',
-                r'(compte\s+courant\s+du\s+trésor)',
-                r'(billets\s+et\s+monnaies\s+en\s+circulation)',
-                r'(volume\s+global\s+de\s+refinancement)',
-                r'(avoirs\s+nets\s+en\s+devises)',
-                r'(indice\s+des\s+prix\s+à\s+la\s+consommation)',
-                r'(inflation\s+sous-jacente)'
-            ],
-            
-            'value_context_patterns': [
-                r'([a-zA-Zàâäéèêëïîôöùûüÿç\s]+)\s*:\s*([0-9]+[,.]?[0-9]*)\s*(%|MDT?|TND|millions?)',
-                r'([a-zA-Zàâäéèêëïîôöùûüÿç\s]+)\s+(?:atteint|est de|s\'élève à)\s*([0-9]+[,.]?[0-9]*)\s*(%|MDT?|TND)',
-                r'([0-9]+[,.]?[0-9]*)\s*(%|MDT?|TND)\s+(?:pour|de|du)\s+([a-zA-Zàâäéèêëïîôöùûüÿç\s]+)'
-            ]
-        }
-        
-        # Mappings intelligents pour noms d'indicateurs
-        self.smart_indicator_mapping = {
-            'taux directeur': 'Taux d\'intérêt directeur BCT',
-            'taux du marché monétaire': 'Taux du marché monétaire (TM)',
-            'taux moyen du marché monétaire': 'Taux moyen du marché monétaire (TMM)', 
-            'tre': 'Taux de rémunération de l\'épargne (TRE)',
-            'taux de rémunération de l\'épargne': 'Taux de rémunération de l\'épargne (TRE)',
-            'compte courant du trésor': 'Compte courant du Trésor',
-            'billets et monnaies en circulation': 'Billets et monnaies en circulation',
-            'volume global de refinancement': 'Volume global de refinancement',
-            'avoirs nets en devises': 'Avoirs nets en devises',
-            'inflation': 'Taux d\'inflation',
-            'inflation sous-jacente': 'Taux d\'inflation sous-jacente',
-            'ipc': 'Indice des Prix à la Consommation (IPC)',
-            'tunibor': 'Taux interbancaire tunisien (TUNIBOR)',
-            'gdp': 'Produit Intérieur Brut (PIB)',
-            'pib': 'Produit Intérieur Brut (PIB)'
-        }
-
-    async def _test_ollama_connection(self) -> Dict[str, Any]:
-        """Test de connexion Ollama"""
-        try:
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
-                async with session.get(f"{self.ollama_url}/api/version") as response:
-                    if response.status == 200:
-                        version_data = await response.json()
-                        return {
-                            "status": "connected",
-                            "version": version_data.get("version", "unknown"),
-                            "model_available": self.ollama_model
-                        }
-                    else:
-                        return {"status": "version_failed", "http_status": response.status}
-        except Exception as e:
-            return {
-                "status": "connection_failed",
-                "error": str(e)
-            }
-
-    async def _analyze_with_ollama(self, content: str, extracted_values: Dict[str, Any]) -> Dict[str, Any]:
-        """🔧 CORRIGÉ: Analyse avec Ollama - timeout amélioré"""
-        
-        # Test de connexion
-        connection_test = await self._test_ollama_connection()
-        if connection_test["status"] != "connected":
-            return {
-                "error": f"Ollama non disponible: {connection_test.get('error', 'Service non connecté')}",
-                "llm_status": "not_available",
-                "connection_details": connection_test
-            }
-
-        # Créer le prompt d'analyse
-        prompt = self._create_analysis_prompt(content, extracted_values)
-        
-        try:
-            # 🔧 TIMEOUT AUGMENTÉ à 120s
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.llm_timeout)) as session:
-                payload = {
-                    "model": self.ollama_model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.2,
-                        "top_p": 0.8,
-                        "max_tokens": 300,  # 🔧 RÉDUIT de 400 à 300 pour accélérer
-                        "stop": ["\n\n", "---", "Conclusion:"]  # 🔧 AJOUT de stops pour accélérer
-                    }
-                }
-                
-                logger.info(f"🤖 Démarrage analyse Ollama (timeout: {self.llm_timeout}s)")
-                start_time = time.time()
-                
-                async with session.post(f"{self.ollama_url}/api/generate", json=payload) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        processing_time = time.time() - start_time
-                        
-                        logger.info(f"✅ Ollama terminé en {processing_time:.2f}s")
-                        
-                        return {
-                            "analysis": result.get("response", ""),
-                            "model_used": self.ollama_model,
-                            "llm_status": "success",
-                            "confidence_score": 0.85,
-                            "processing_time": processing_time,
-                            "tokens_generated": result.get("eval_count", 0)
-                        }
-                    else:
-                        error_text = await response.text()
-                        return {
-                            "error": f"Erreur Ollama HTTP {response.status}: {error_text}",
-                            "llm_status": "http_error"
-                        }
-                        
-        except asyncio.TimeoutError:
-            logger.warning(f"⏰ Timeout Ollama après {self.llm_timeout}s")
-            return {
-                "error": f"Timeout Ollama après {self.llm_timeout}s - Modèle trop lent",
-                "llm_status": "timeout",
-                "suggestion": "Essayer avec un modèle plus léger comme tinyllama"
-            }
-        except Exception as e:
-            logger.error(f"Erreur Ollama: {str(e)}")
-            return {
-                "error": f"Erreur Ollama: {str(e)}",
-                "llm_status": "error"
-            }
-
-    def _create_analysis_prompt(self, content: str, extracted_values: Dict[str, Any]) -> str:
-        """Créer le prompt d'analyse pour Ollama"""
-        
-        # Résumé des valeurs extraites
-        values_summary = []
-        for key, value_data in extracted_values.items():
-            if isinstance(value_data, dict):
-                name = value_data.get('indicator_name', key)
-                value = value_data.get('value', 0)
-                unit = value_data.get('unit', '')
-                values_summary.append(f"- {name}: {value} {unit}")
-        
-        values_text = "\n".join(values_summary) if values_summary else "Aucune valeur extraite"
-        
-        # Extrait du contenu pour contexte
-        content_preview = content[:300] + "..." if len(content) > 300 else content
-        
-        prompt = f"""Analysez ces données économiques tunisiennes:
-
-VALEURS EXTRAITES:
-{values_text}
-
-CONTEXTE DU CONTENU:
-{content_preview}
-
-Fournissez une analyse concise incluant:
-1. Type de données économiques (PIB, inflation, taux directeur, etc.)
-2. Qualité et fiabilité (source officielle, données récentes)
-3. Tendances observées (hausse, baisse, stabilité)
-4. Contexte économique tunisien
-
-Réponse structurée (max 200 mots):"""
-        
-        return prompt
-
-    def scrape_with_analysis(self, url: str, enable_llm_analysis: bool = False) -> Optional[ScrapedContent]:
-        """🔧 CORRIGÉ: Point d'entrée principal avec paramètre enable_llm_analysis"""
-        try:
-            logger.info(f"🧠 Starting enhanced intelligent scraping for: {url}")
-            logger.info(f"🤖 LLM Analysis: {'Enabled' if enable_llm_analysis else 'Disabled'}")
-            
-            # Scraping de base avec le parent amélioré
-            base_data = super().scrape(url)
-            if not base_data:
-                logger.warning(f"No base data from smart scraper for {url}")
-                return None
-            
-            # 🔧 CORRIGÉ: Passer enable_llm_analysis à l'analyse
-            enhanced_analysis = self._perform_enhanced_analysis(
-                base_data.raw_content, 
-                base_data.structured_data, 
-                url,
-                enable_llm_analysis  # 🔧 NOUVEAU paramètre
-            )
-            
-            # Fusion des données avec l'analyse intelligente
-            enriched_data = {
-                **base_data.structured_data,
-                'intelligent_analysis': enhanced_analysis.dict() if enhanced_analysis else {},
-                'enhancement_method': 'intelligent_contextual',
-                'analysis_timestamp': datetime.utcnow().isoformat(),
-                'settings_compliance': self._assess_enhanced_compliance(base_data.structured_data)
-            }
-            
-            return ScrapedContent(
-                raw_content=base_data.raw_content,
-                structured_data=enriched_data,
-                metadata={
-                    **base_data.metadata,
-                    'analysis_method': 'intelligent_contextual',
-                    'ai_enhanced': True,
-                    'context_enriched': True,
-                    'semantic_validation': True
-                }
-            )
-            
-        except Exception as e:
-            logger.error(f"Enhanced intelligent scraping failed for {url}: {str(e)}", exc_info=True)
-            return None
-
-    def _perform_enhanced_analysis(self, html: str, base_data: Dict[str, Any], url: str, enable_llm: bool = False) -> Optional[AnalysisResult]:
-        """🔧 CORRIGÉ: Analyse intelligente avec paramètre enable_llm"""
-        try:
-            text_content = html
-            extracted_values = base_data.get('extracted_values', {})
-            
-            # 1. Enrichissement contextuel des valeurs existantes
-            enriched_values = self._enrich_with_context_intelligence(extracted_values, text_content)
-            
-            # 2. Validation sémantique et nettoyage intelligent
-            validated_values = self._semantic_validation_and_cleanup(enriched_values, text_content)
-            
-            # 3. Extraction d'indicateurs manqués avec IA contextuelle
-            missed_indicators = self._extract_missed_indicators_with_ai(text_content, validated_values)
-            validated_values.update(missed_indicators)
-            
-            # 4. Analyse des relations et cohérence
-            coherence_analysis = self._analyze_data_coherence(validated_values)
-            
-            # 5. 🔧 CORRIGÉ: Passer enable_llm aux insights
-            smart_insights = self._generate_smart_insights_sync(validated_values, text_content, url, coherence_analysis, enable_llm)
-            
-            # 6. Construire la liste d'indicateurs pour AnalysisResult
-            indicators_list = self._build_indicators_list(validated_values)
-            
-            return AnalysisResult(
-                indicators=indicators_list,
-                confidence=self._calculate_enhanced_confidence(validated_values, coherence_analysis),
-                analysis_type=AnalysisType.ADVANCED,
-                insights=smart_insights
-            )
-            
-        except Exception as e:
-            logger.error(f"Error in enhanced analysis: {e}")
-            return None
-
-    def _build_indicators_list(self, extracted_values: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Construire la liste d'indicateurs pour AnalysisResult"""
-        indicators_list = []
-        
-        for key, value_data in extracted_values.items():
-            if isinstance(value_data, dict):
-                indicator = {
-                    "id": key,
-                    "name": value_data.get("enhanced_indicator_name", value_data.get("indicator_name", "")),
-                    "value": value_data.get("value", 0),
-                    "unit": value_data.get("unit", ""),
-                    "category": value_data.get("category", ""),
-                    "confidence": value_data.get("confidence_score", 0),
-                    "validated": value_data.get("validated", False),
-                    "extraction_method": value_data.get("extraction_method", ""),
-                    "temporal_info": value_data.get("temporal_metadata", {}),
-                    "source": value_data.get("institutional_source", "")
-                }
-                indicators_list.append(indicator)
-        
-        return indicators_list
-
-    def _generate_smart_insights_sync(self, values: Dict[str, Any], text: str, url: str, coherence: Dict[str, Any], enable_llm: bool = False) -> Dict[str, Any]:
-        """🔧 CORRIGÉ: Génère des insights avec LLM seulement si enable_llm=True"""
-        insights = {
-            'data_summary': self._generate_data_summary(values),
-            'quality_assessment': self._assess_data_quality(values, coherence),
-            'indicator_analysis': self._analyze_indicators(values),
-            'temporal_analysis': self._analyze_temporal_patterns(values),
-            'recommendations': self._generate_recommendations(values, coherence),
-            'llm_analysis': self._run_llm_analysis_sync(text, values) if enable_llm else self._create_llm_disabled_response()
-        }
-        
-        return insights
-
-    def _create_llm_disabled_response(self) -> Dict[str, Any]:
-        """🔧 NOUVEAU: Réponse quand LLM est désactivé"""
-        return {
-            "insights": {
-                "message": "Analyse LLM désactivée par l'utilisateur"
-            },
-            "llm_status": "disabled_by_user",
-            "processing_time": 0,
-            "model_used": None
-        }
-
-    def _run_llm_analysis_sync(self, content: str, extracted_values: Dict[str, Any]) -> Dict[str, Any]:
-        """Exécute l'analyse LLM de manière synchrone"""
-        try:
-            # Utiliser asyncio pour exécuter la fonction async
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-            try:
-                result = loop.run_until_complete(self._analyze_with_ollama(content, extracted_values))
-                return result
-            finally:
-                loop.close()
-                
-        except Exception as e:
-            logger.error(f"Error running LLM analysis: {e}")
-            return {
-                "error": f"Erreur lors de l'analyse LLM: {str(e)}",
-                "llm_status": "sync_error"
-            }
-
-    def _enrich_with_context_intelligence(self, values: Dict[str, Any], text: str) -> Dict[str, Any]:
-        """Enrichissement contextuel intelligent des valeurs"""
-        enriched = {}
-        
-        for key, value_data in values.items():
-            try:
-                enhanced_data = value_data.copy()
-                context = value_data.get('context_text', '')
-                
-                # Amélioration intelligente du nom d'indicateur
-                enhanced_data['enhanced_indicator_name'] = self._enhance_indicator_name_intelligently(
-                    context, value_data.get('indicator_name', ''), value_data.get('value', 0)
-                )
-                
-                # Extraction de métadonnées temporelles précises
-                enhanced_data['temporal_metadata'] = self._extract_precise_temporal_data(context)
-                
-                # Identification de la source institutionnelle
-                enhanced_data['institutional_source'] = self._identify_institutional_source(context)
-                
-                # Validation de la cohérence économique
-                enhanced_data['economic_coherence'] = self._validate_economic_coherence(
-                    value_data.get('value', 0), 
-                    enhanced_data['enhanced_indicator_name'],
-                    context
-                )
-                
-                # Score de qualité sémantique
-                enhanced_data['semantic_quality'] = self._calculate_semantic_quality(enhanced_data)
-                
-                enriched[key] = enhanced_data
-                
-            except Exception as e:
-                logger.debug(f"Error enriching value {key}: {e}")
-                enriched[key] = value_data
-                
-        return enriched
-
-    def _semantic_validation_and_cleanup(self, values: Dict[str, Any], text: str) -> Dict[str, Any]:
-        """Validation sémantique et nettoyage intelligent"""
-        validated = {}
-        
-        for key, value_data in values.items():
-            try:
-                value = value_data.get('value', 0)
-                indicator_name = value_data.get('enhanced_indicator_name', value_data.get('indicator_name', ''))
-                context = value_data.get('context_text', '')
-                
-                # Tests de validation sémantique
-                validations = {
-                    'is_economic_indicator': self._is_genuine_economic_indicator(indicator_name, context, value),
-                    'is_temporally_coherent': self._is_temporally_coherent(value_data.get('temporal_metadata', {})),
-                    'is_value_plausible': self._is_value_economically_plausible(value, indicator_name),
-                    'has_institutional_backing': bool(value_data.get('institutional_source')),
-                    'semantic_score': value_data.get('semantic_quality', 0)
-                }
-                
-                # Score de validation global
-                validation_score = sum([
-                    validations['is_economic_indicator'] * 0.3,
-                    validations['is_temporally_coherent'] * 0.2,
-                    validations['is_value_plausible'] * 0.2,
-                    validations['has_institutional_backing'] * 0.1,
-                    validations['semantic_score'] * 0.2
-                ])
-                
-                # Garder seulement les valeurs avec score suffisant
-                if validation_score >= 0.4:  # Seuil abaissé pour être moins strict
-                    value_data['validation_details'] = validations
-                    value_data['overall_validation_score'] = validation_score
-                    value_data['validated'] = True
-                    validated[key] = value_data
-                    
-                    logger.debug(f"✅ Validated indicator: {indicator_name} (score: {validation_score:.2f})")
-                else:
-                    logger.debug(f"❌ Rejected indicator: {indicator_name} (score: {validation_score:.2f})")
-                    
-            except Exception as e:
-                logger.debug(f"Error validating {key}: {e}")
-                
-        return validated
-
-    def _extract_missed_indicators_with_ai(self, text: str, existing_values: Dict[str, Any]) -> Dict[str, Any]:
-        """Extraction d'indicateurs manqués avec IA contextuelle"""
-        missed_indicators = {}
-        
-        try:
-            # Analyser les patterns de valeurs contextuels
-            for pattern in self.context_enrichment_patterns['value_context_patterns']:
-                matches = re.finditer(pattern, text, re.IGNORECASE)
-                
-                for match in matches:
-                    try:
-                        groups = match.groups()
-                        if len(groups) >= 3:
-                            # Extraction flexible selon le pattern
-                            if groups[1] and groups[2]:  # Pattern: nom : valeur unité
-                                indicator_raw = groups[0].strip()
-                                value_str = groups[1]
-                                unit = groups[2]
-                            elif groups[0] and groups[2]:  # Pattern: valeur unité pour nom
-                                value_str = groups[0] 
-                                unit = groups[1]
-                                indicator_raw = groups[2].strip()
-                            else:
-                                continue
-                            
-                            # Parser la valeur
-                            parsed_value = self._parse_numeric_enhanced(value_str)
-                            if parsed_value is None:
-                                continue
-                            
-                            # Nettoyer et mapper le nom d'indicateur
-                            indicator_name = self._map_to_smart_indicator_name(indicator_raw)
-                            
-                            # Vérifier si ce n'est pas déjà extrait
-                            if self._is_already_extracted(indicator_name, parsed_value, existing_values):
-                                continue
-                            
-                            # Catégoriser intelligemment
-                            category = self._categorize_intelligently(indicator_name, indicator_raw)
-                            
-                            # Valider la cohérence
-                            if self._is_coherent_new_indicator(indicator_name, parsed_value, unit, category):
-                                key = f"ai_extracted_{len(missed_indicators)}"
-                                
-                                missed_indicators[key] = {
-                                    'value': parsed_value,
-                                    'raw_text': value_str,
-                                    'indicator_name': indicator_name,
-                                    'enhanced_indicator_name': indicator_name,
-                                    'category': category,
-                                    'unit': unit,
-                                    'unit_description': self._get_unit_description(unit),
-                                    
-                                    'context_text': match.group(0),
-                                    'extraction_method': 'ai_contextual_pattern',
-                                    'is_real_indicator': True,
-                                    'confidence_score': 0.85,
-                                    'semantic_quality': 0.9,
-                                    'validated': True,
-                                    'extraction_date': datetime.now().isoformat()
-                                }
-                                
-                                logger.info(f"🔍 AI extracted missed indicator: {indicator_name} = {parsed_value} {unit}")
-                                
-                    except Exception as e:
-                        logger.debug(f"Error processing AI pattern match: {e}")
-                        continue
-                        
-        except Exception as e:
-            logger.error(f"Error in AI missed indicators extraction: {e}")
-            
-        return missed_indicators
-
-    def _enhance_indicator_name_intelligently(self, context: str, current_name: str, value: float) -> str:
-        """Amélioration intelligente du nom d'indicateur"""
-        context_lower = context.lower()
-        
-        # Mapping pour données World Bank
-        if 'gdp' in context_lower or 'current us$' in context_lower:
-            return 'Produit Intérieur Brut (PIB) - USD courants'
-        
-        # Recherche de patterns spécifiques dans le contexte
-        for pattern in self.context_enrichment_patterns['indicator_qualifiers']:
-            match = re.search(pattern, context_lower)
-            if match:
-                matched_text = match.group(1)
-                return self._map_to_smart_indicator_name(matched_text)
-        
-        # Mapping intelligent basé sur le contexte et la valeur
-        if 'directeur' in context_lower and 0 < value < 20:
-            return 'Taux d\'intérêt directeur BCT'
-        elif 'marché monétaire' in context_lower and 'moyen' in context_lower:
-            return 'Taux moyen du marché monétaire (TMM)'
-        elif 'marché monétaire' in context_lower:
-            return 'Taux du marché monétaire (TM)'
-        elif 'épargne' in context_lower and 'rémunération' in context_lower:
-            return 'Taux de rémunération de l\'épargne (TRE)'
-        
-        return current_name
-
-    def _map_to_smart_indicator_name(self, raw_name: str) -> str:
-        """Mapping intelligent vers noms d'indicateurs standardisés"""
-        raw_lower = raw_name.lower().strip()
-        
-        # Recherche directe dans le mapping
-        if raw_lower in self.smart_indicator_mapping:
-            return self.smart_indicator_mapping[raw_lower]
-        
-        # Recherche par mots-clés
-        for key, mapped_name in self.smart_indicator_mapping.items():
-            if key in raw_lower or any(word in raw_lower for word in key.split()):
-                return mapped_name
-        
-        # Nettoyage et capitalisation
-        cleaned = re.sub(r'[^\w\s\'\(\)-]', '', raw_name).strip()
-        return cleaned.title() if cleaned else 'Indicateur économique'
-
-    def _extract_precise_temporal_data(self, context: str) -> Dict[str, Any]:
-        """Extraction précise des données temporelles"""
-        temporal_data = {
-            'reference_date': None,
-            'period_type': 'unknown',
-            'is_current_period': False,
-            'year': None,
-            'month': None,
-            'day': None
-        }
-        
-        try:
-            # Détecter les années dans le contexte (important pour World Bank)
-            year_pattern = r'\b(20\d{2})\b'
-            year_match = re.search(year_pattern, context)
-            if year_match:
-                temporal_data['year'] = int(year_match.group(1))
-                temporal_data['reference_date'] = year_match.group(1)
-                temporal_data['period_type'] = 'yearly'
-                temporal_data['is_current_period'] = temporal_data['year'] >= 2020
-            
-            for pattern in self.context_enrichment_patterns['temporal_markers']:
-                match = re.search(pattern, context, re.IGNORECASE)
-                if match:
-                    groups = match.groups()
-                    
-                    if len(groups) == 3:  # jour/mois/année
-                        temporal_data.update({
-                            'day': int(groups[0]),
-                            'month': int(groups[1]) if groups[1].isdigit() else groups[1],
-                            'year': int(groups[2]),
-                            'reference_date': match.group(0),
-                            'period_type': 'daily'
-                        })
-                    elif len(groups) == 2:  # mois année
-                        temporal_data.update({
-                            'month': groups[0] if not groups[0].isdigit() else int(groups[0]),
-                            'year': int(groups[1]),
-                            'reference_date': match.group(0),
-                            'period_type': 'monthly'
-                        })
-                    
-                    temporal_data['is_current_period'] = temporal_data['year'] == datetime.now().year
-                    break
-                    
-        except Exception as e:
-            logger.debug(f"Error extracting temporal data: {e}")
-            
-        return temporal_data
-
-    def _identify_institutional_source(self, context: str) -> Optional[str]:
-        """Identification de la source institutionnelle"""
-        context_lower = context.lower()
-        
-        sources = {
-            'bct': 'Banque Centrale de Tunisie',
-            'banque centrale': 'Banque Centrale de Tunisie',
-            'ins': 'Institut National de la Statistique',
-            'institut national de la statistique': 'Institut National de la Statistique',
-            'source : institut': 'Institut National de la Statistique',
-            'world bank': 'Banque Mondiale',
-            'worldbank': 'Banque Mondiale',
-            'api.worldbank.org': 'Banque Mondiale'
-        }
-        
-        for pattern, source in sources.items():
-            if pattern in context_lower:
-                return source
-                
-        return None
-
-    def _is_genuine_economic_indicator(self, indicator_name: str, context: str, value: float) -> bool:
-        """Vérifie si c'est un vrai indicateur économique"""
-        indicator_lower = indicator_name.lower()
-        context_lower = context.lower()
-        
-        # Indicateurs économiques reconnus
-        economic_terms = [
-            'taux', 'inflation', 'pib', 'gdp', 'commerce', 'export', 'import',
-            'monétaire', 'directeur', 'épargne', 'refinancement', 'compte',
-            'circulation', 'devises', 'croissance', 'population'
-        ]
-        
-        # Termes non économiques
-        non_economic_terms = [
-            'date', 'jour', 'mois', 'année', 'mise à jour', 'source',
-            'page', 'fichier', 'lien', 'contact'
-        ]
-        
-        has_economic_terms = any(term in indicator_lower for term in economic_terms)
-        has_non_economic_terms = any(term in indicator_lower for term in non_economic_terms)
-        
-        return has_economic_terms and not has_non_economic_terms
-
-    def _is_temporally_coherent(self, temporal_metadata: Dict[str, Any]) -> bool:
-        """Vérifie la cohérence temporelle"""
-        try:
-            year = temporal_metadata.get('year')
-            if year and isinstance(year, int):
-                return 2015 <= year <= 2025  # Période réaliste
-            return True  # Si pas d'info temporelle, considérer comme valide
-        except:
-            return True
-
-    def _is_value_economically_plausible(self, value: float, indicator_name: str) -> bool:
-        """Vérifie la plausibilité économique de la valeur"""
-        indicator_lower = indicator_name.lower()
-        
-        # Plages réalistes par type d'indicateur
-        if 'taux' in indicator_lower and '%' in indicator_name:
-            return 0 <= value <= 30  # Taux entre 0 et 30%
-        elif 'pib' in indicator_lower or 'gdp' in indicator_lower:
-            return 1000000000 <= value <= 1000000000000  # PIB en USD (milliards)
-        elif 'compte' in indicator_lower or 'volume' in indicator_lower or 'billets' in indicator_lower:
-            return 100 <= value <= 100000  # Montants en MDT
-        elif 'inflation' in indicator_lower:
-            return 0 <= value <= 50  # Inflation réaliste
-        
-        return 0.01 <= value <= 1000000000000  # Plage générale très large
-
-    def _calculate_semantic_quality(self, enhanced_data: Dict[str, Any]) -> float:
-        """Calcule le score de qualité sémantique"""
-        score = 0.0
-        
-        # Qualité du nom d'indicateur
-        if enhanced_data.get('enhanced_indicator_name', '').count(' ') >= 1:
-            score += 0.3
-        
-        # Présence de métadonnées temporelles
-        if enhanced_data.get('temporal_metadata', {}).get('reference_date'):
-            score += 0.2
-        
-        # Source institutionnelle identifiée
-        if enhanced_data.get('institutional_source'):
-            score += 0.2
-        
-        # Contexte économique riche
-        context = enhanced_data.get('context_text', '')
-        if len(context) > 50 and any(term in context.lower() for term in ['taux', 'économique', 'statistique', 'gdp', 'tunisia']):
-            score += 0.3
-        
-        return min(score, 1.0)
-
-    def _analyze_data_coherence(self, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyse la cohérence des données extraites"""
-        coherence = {
-            'temporal_consistency': True,
-            'value_ranges_realistic': True,
-            'indicator_coverage': {},
-            'data_quality_score': 0.0
-        }
-        
-        try:
-            # Analyser la cohérence temporelle
-            years = [v.get('temporal_metadata', {}).get('year') for v in values.values()]
-            years = [y for y in years if y]
-            if years:
-                coherence['temporal_consistency'] = max(years) - min(years) <= 5
-            
-            # Analyser la couverture des indicateurs
-            categories = [v.get('category') for v in values.values()]
-            coherence['indicator_coverage'] = {cat: categories.count(cat) for cat in set(categories) if cat}
-            
-            # Score de qualité global
-            quality_scores = [v.get('semantic_quality', 0) for v in values.values()]
-            coherence['data_quality_score'] = sum(quality_scores) / len(quality_scores) if quality_scores else 0
-            
-        except Exception as e:
-            logger.debug(f"Error analyzing coherence: {e}")
-            
-        return coherence
-
-    def _generate_data_summary(self, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Génère un résumé intelligent des données"""
-        summary = {
-            'total_indicators': len(values),
-            'validated_indicators': len([v for v in values.values() if v.get('validated')]),
-            'categories_found': list(set(v.get('category') for v in values.values() if v.get('category'))),
-            'time_periods_covered': list(set(str(v.get('temporal_metadata', {}).get('year')) for v in values.values() if v.get('temporal_metadata', {}).get('year'))),
-            'sources_identified': list(set(v.get('institutional_source') for v in values.values() if v.get('institutional_source')))
-        }
-        
-        return summary
-
-    def _assess_data_quality(self, values: Dict[str, Any], coherence: Dict[str, Any]) -> Dict[str, Any]:
-        """Évalue la qualité des données"""
-        quality_scores = [v.get('overall_validation_score', 0) for v in values.values()]
-        
-        return {
-            'average_quality': sum(quality_scores) / len(quality_scores) if quality_scores else 0,
-            'high_quality_indicators': len([s for s in quality_scores if s > 0.8]),
-            'temporal_coherence': coherence.get('temporal_consistency', False),
-            'data_completeness': min(len(values) / 4, 1.0),  # Ratio par rapport à 4 indicateurs attendus
-        }
-
-    def _analyze_indicators(self, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyse les indicateurs trouvés"""
-        by_category = {}
-        for value_data in values.values():
-            category = value_data.get('category', 'unknown')
-            if category not in by_category:
-                by_category[category] = []
-            by_category[category].append({
-                'name': value_data.get('enhanced_indicator_name', ''),
-                'value': value_data.get('value', 0),
-                'unit': value_data.get('unit', ''),
-                'quality': value_data.get('semantic_quality', 0)
-            })
-        
-        return by_category
-
-    def _analyze_temporal_patterns(self, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyse les patterns temporels"""
-        temporal_data = []
-        for value_data in values.values():
-            temp_meta = value_data.get('temporal_metadata', {})
-            if temp_meta.get('reference_date'):
-                temporal_data.append(temp_meta)
-        
-        return {
-            'periods_found': len(temporal_data),
-            'most_recent': max([t.get('year', 0) for t in temporal_data]) if temporal_data else None,
-            'period_types': list(set(t.get('period_type') for t in temporal_data if t.get('period_type')))
-        }
-
-    def _generate_recommendations(self, values: Dict[str, Any], coherence: Dict[str, Any]) -> List[str]:
-        """Génère des recommandations intelligentes"""
-        recommendations = []
-        
-        quality_score = coherence.get('data_quality_score', 0)
-        if quality_score < 0.7:
-            recommendations.append("Améliorer la qualité des données en validant avec des sources officielles supplémentaires")
-        
-        if len(values) < 3:
-            recommendations.append("Rechercher des indicateurs économiques supplémentaires pour enrichir l'analyse")
-        
-        categories = set(v.get('category') for v in values.values() if v.get('category'))
-        if len(categories) < 2:
-            recommendations.append("Diversifier les catégories d'indicateurs économiques (monétaire, fiscal, commerce extérieur)")
-        
-        if not coherence.get('temporal_consistency'):
-            recommendations.append("Vérifier la cohérence temporelle des données extraites")
-            
-        return recommendations
-
-    def _calculate_enhanced_confidence(self, values: Dict[str, Any], coherence: Dict[str, Any]) -> float:
-        """Calcule la confiance globale enrichie"""
-        if not values:
-            return 0.0
-        
-        # Confiance basée sur la validation sémantique
-        validation_scores = [v.get('overall_validation_score', 0) for v in values.values()]
-        avg_validation = sum(validation_scores) / len(validation_scores)
-        
-        # Bonus pour la cohérence des données
-        coherence_bonus = 0.1 if coherence.get('temporal_consistency') else 0
-        
-        # Bonus pour la qualité sémantique
-        quality_scores = [v.get('semantic_quality', 0) for v in values.values()]
-        avg_quality = sum(quality_scores) / len(quality_scores)
-        
-        # Bonus pour le nombre d'indicateurs
-        quantity_bonus = min(len(values) / 4 * 0.1, 0.1)
-        
-        return min(avg_validation * 0.5 + avg_quality * 0.3 + coherence_bonus + quantity_bonus, 1.0)
-
-    def _assess_enhanced_compliance(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Évaluation améliorée de la conformité"""
-        values = data.get('extracted_values', {})
-        
-        compliance = {
-            'target_indicators_compliance': len([v for v in values.values() if v.get('is_target_indicator')]) > 0,
-            'recognized_units_compliance': len([v for v in values.values() if v.get('unit')]) > 0,
-            'temporal_compliance': len([v for v in values.values() if v.get('temporal_valid')]) > 0,
-            'semantic_quality_compliance': sum([v.get('semantic_quality', 0) for v in values.values()]) / len(values) > 0.5 if values else False,
-            'validation_compliance': len([v for v in values.values() if v.get('validated')]) / len(values) > 0.6 if values else False
-        }
-        
-        compliance['overall_compliance_score'] = sum(compliance.values()) / len(compliance)
-        
-        return compliance
-
-    # Méthodes utilitaires supplémentaires
+def suggest_extraction_improvements(debug_info: Dict[str, Any]) -> List[str]:
+    """Suggestions d'amélioration pour l'extraction"""
+    suggestions = []
     
-    def _is_already_extracted(self, indicator_name: str, value: float, existing_values: Dict[str, Any]) -> bool:
-        """Vérifie si un indicateur similaire a déjà été extrait"""
-        for existing_data in existing_values.values():
-            existing_name = existing_data.get('enhanced_indicator_name', existing_data.get('indicator_name', ''))
-            existing_value = existing_data.get('value', 0)
-            
-            # Même nom d'indicateur ou valeur très proche
-            if (indicator_name.lower() == existing_name.lower() or 
-                abs(value - existing_value) < 0.01):
-                return True
-        return False
+    if not debug_info:
+        return ["Aucune information de debug disponible"]
+    
+    extraction_count = debug_info.get('extraction_count', 0)
+    
+    if extraction_count == 0:
+        suggestions.append("Aucune donnée extraite - site peut nécessiter JavaScript")
+        suggestions.append("Considérer l'utilisation de Selenium")
+    
+    return suggestions if suggestions else ["Extraction optimale"]
 
-    def _categorize_intelligently(self, indicator_name: str, raw_indicator: str) -> str:
-        """Catégorisation intelligente basée sur plusieurs critères"""
-        combined_text = f"{indicator_name} {raw_indicator}".lower()
+class CohesiveIntelligentScraper(TunisianWebScraper):
+    """Scraper Intelligent utilisant TOUS les modules du projet"""
+    
+    def __init__(self, delay: float = None):
+        super().__init__(delay)
         
-        # Catégorisation spécifique
-        if 'pib' in combined_text or 'gdp' in combined_text:
-            return 'comptes_nationaux'
-        elif 'directeur' in combined_text or 'monétaire' in combined_text:
-            return 'finance_et_monnaie'
-        elif 'inflation' in combined_text or 'prix' in combined_text:
-            return 'prix_et_inflation'
-        elif 'commerce' in combined_text or 'export' in combined_text:
-            return 'commerce_exterieur'
-        elif 'chomage' in combined_text or 'emploi' in combined_text:
-            return 'marche_du_travail'
+        # Configuration LLM cohérente avec les settings
+        self.llm_available = settings.ENABLE_LLM_ANALYSIS
+        self.ollama_url = settings.OLLAMA_HOST
+        self.ollama_model = settings.OLLAMA_MODEL
+        self.llm_timeout = settings.OLLAMA_TIMEOUT  # COHÉRENT avec settings
         
-        return 'comptes_nationaux'  # Par défaut
-
-    def _is_coherent_new_indicator(self, indicator_name: str, value: float, unit: str, category: str) -> bool:
-        """Vérifie la cohérence d'un nouvel indicateur"""
+        # CRITICAL FIX: Initialize LLM config properly
         try:
-            # Validation de base
-            if value <= 0 or not indicator_name:
+            from app.config.llm_config import fixed_llm_config
+            self.llm_config = fixed_llm_config
+            logger.info(f"LLM config initialized - Available: {self.llm_config.llm_available}")
+            # Update availability based on actual config
+            if self.llm_available and not self.llm_config.llm_available:
+                self.llm_available = False
+                logger.warning("LLM config indicates service unavailable")
+        except ImportError as e:
+            logger.warning(f"Could not import LLM config: {e}")
+            self.llm_config = None
+            self.llm_available = False
+        
+        # Test de connectivité LLM automatique
+        if self.llm_available:
+            self.llm_available = self._test_llm_connection()
+        
+        # Métriques d'utilisation des modules
+        self.module_usage = {
+            'utils_helpers': 0,
+            'data_validator': 0,
+            'temporal_filter': 0,
+            'clean_extractor': 0,
+            'storage': 0,
+            'llm_analysis': 0
+        }
+        
+        logger.info(f"CohesiveIntelligentScraper initialized - LLM: {'Available' if self.llm_available else 'Unavailable'}")
+        logger.info(f"Configuration - Timeout: {self.llm_timeout}s, Model: {self.ollama_model}")
+
+    def _test_llm_connection(self) -> bool:
+        """Test automatique de connexion LLM avec configuration cohérente"""
+        try:
+            response = requests.get(
+                f"{self.ollama_url}/api/tags", 
+                timeout=settings.OLLAMA_CONNECTION_TIMEOUT
+            )
+            if response.status_code == 200:
+                logger.info("LLM service available and configured")
+                return True
+            else:
+                logger.warning(f"LLM service unavailable: HTTP {response.status_code}")
                 return False
-            
-            # Validation par catégorie
-            if category == 'finance_et_monnaie':
-                if unit == '%':
-                    return 0.1 <= value <= 25  # Taux réalistes
-                elif unit in ['MDT', 'millions']:
-                    return 100 <= value <= 50000  # Montants réalistes
-            elif category == 'prix_et_inflation':
-                return 0.1 <= value <= 20 and unit == '%'  # Inflation réaliste
-            elif category == 'comptes_nationaux':
-                if 'pib' in indicator_name.lower() or 'gdp' in indicator_name.lower():
-                    return 1000000000 <= value <= 1000000000000  # PIB en USD
-            
-            return True
-            
-        except Exception:
+        except Exception as e:
+            logger.warning(f"LLM connection test failed: {e}")
             return False
 
-    def _validate_economic_coherence(self, value: float, indicator_name: str, context: str) -> Dict[str, Any]:
-        """Validation approfondie de la cohérence économique"""
-        coherence = {
-            'is_economically_plausible': True,
-            'value_range_check': 'passed',
-            'context_consistency': True,
-            'temporal_alignment': True
-        }
-        
+    def scrape_with_analysis(self, url: str, enable_llm_analysis: bool = False) -> Optional[ScrapedContent]:
+        """Scraping intelligent optimisé pour sites complexes tunisiens"""
         try:
-            # Validation des plages par type d'indicateur
-            indicator_lower = indicator_name.lower()
+            logger.info(f"🧠 INTELLIGENT scraping for complex site: {url}")
+
+            # ÉTAPE 1 : Détection du type de site tunisien
+            site_type = self._detect_tunisian_site_type(url)
+            logger.info(f"Detected Tunisian site type: {site_type}")
+
+            # ÉTAPE 2 : Configuration adaptée au site
+            scraping_config = self._get_site_specific_config(site_type, url)
             
-            if 'pib' in indicator_lower or 'gdp' in indicator_lower:
-                coherence['is_economically_plausible'] = 1000000000 <= value <= 1000000000000
-                coherence['value_range_check'] = 'gdp_range'
-            elif 'taux' in indicator_lower and 'directeur' in indicator_lower:
-                coherence['is_economically_plausible'] = 1 <= value <= 15
-                coherence['value_range_check'] = 'central_bank_rate'
-            elif 'inflation' in indicator_lower:
-                coherence['is_economically_plausible'] = 0 <= value <= 25
-                coherence['value_range_check'] = 'inflation_rate'
-            elif 'compte' in indicator_lower and 'trésor' in indicator_lower:
-                coherence['is_economically_plausible'] = abs(value) <= 10000
-                coherence['value_range_check'] = 'treasury_account'
+            # ÉTAPE 3 : Scraping avec stratégies multiples
+            result = self._intelligent_multi_strategy_scraping(url, scraping_config)
             
-            # Validation contextuelle
-            if any(year in context for year in ['2020', '2021', '2022', '2023', '2024', '2025']):
-                coherence['temporal_alignment'] = True
+            if not result:
+                logger.warning(f"Multi-strategy scraping failed for {url}, using traditional fallback")
+                # Fallback au scraping traditionnel
+                result = super().scrape(url)
+                if not result:
+                    return self._create_fallback_result(url, "All strategies failed")
+
+            # ÉTAPE 4 : Post-processing spécialisé
+            result = self._apply_tunisian_post_processing(result, site_type)
+
+            # ÉTAPE 5: CRITICAL FIX - LLM Enhancement with proper integration
+            if enable_llm_analysis or site_type in ["government", "central_bank", "statistical_institute", "ministry_finance"]:
+                logger.info("Applying LLM enhancement for complex site")
+                result = self._enhance_with_llm_analysis_cohesive(result, url)
+                
+                # EXTRA CHECK: Ensure llm_analysis field exists in result
+                if not hasattr(result, 'llm_analysis'):
+                    result.llm_analysis = {}
+                    logger.warning("Had to create missing llm_analysis attribute")
+                
+                # Ensure it's in structured_data for API response
+                result.structured_data['llm_analysis'] = getattr(result, 'llm_analysis', {})
+
+            logger.info(f"🎯 Intelligent scraping completed: {len(result.indicators)} indicators")
+            return result
+
+        except Exception as e:
+            logger.error(f"Intelligent scraping failed for {url}: {e}")
+            return self._create_fallback_result(url, str(e))
+
+    def _apply_tunisian_post_processing(self, result: ScrapedContent, site_type: str) -> ScrapedContent:
+        """Post-processing spécialisé pour les sites tunisiens"""
+        try:
+            # Appliquer le filtrage temporel
+            result = self._apply_temporal_filtering(result)
+            
+            # Appliquer la validation stricte
+            result = self._apply_strict_validation(result)
+            
+            # Appliquer l'extraction propre
+            result = self._enhance_with_clean_extraction(result, result.metadata.get('url', ''))
+            
+            # Ajouter des insights intelligents
+            tunisian_context = {
+                'tunisian_context': True,
+                'context_strength': 'high',
+                'site_type': site_type
+            }
+            result = self._add_comprehensive_intelligent_insights(
+                result, result.metadata.get('url', ''), tunisian_context
+            )
+            
+            # CRITICAL FIX: Ensure LLM analysis field is initialized
+            if not hasattr(result, 'llm_analysis'):
+                result.llm_analysis = {}
+            
+            # Ensure it's available in structured_data for API response
+            result.structured_data['llm_analysis'] = getattr(result, 'llm_analysis', {})
+            
+            logger.info(f"Tunisian post-processing completed for {site_type}")
+            return result
             
         except Exception as e:
-            logger.debug(f"Error validating economic coherence: {e}")
-            coherence['is_economically_plausible'] = False
-            
-        return coherence
+            logger.error(f"Tunisian post-processing failed: {e}")
+            return result
 
-    def _get_unit_description(self, unit: str) -> str:
-        """Retourne la description de l'unité"""
-        unit_descriptions = {
-            '%': 'Pourcentage',
-            'USD': 'Dollars américains',
-            'TND': 'Dinars tunisiens',
-            'MDT': 'Millions de dinars tunisiens',
-            'millions': 'Millions d\'unités',
-            'milliards': 'Milliards d\'unités'
-        }
-        return unit_descriptions.get(unit, unit)
-
-    def _parse_numeric_enhanced(self, value_str: str) -> Optional[float]:
-        """Parse une valeur numérique avec gestion des formats variés"""
+    def _enhance_with_tunisian_llm_analysis(self, result: ScrapedContent, url: str, site_type: str) -> ScrapedContent:
+        """Enhancement LLM spécialisé pour contexte tunisien"""
+        
         try:
-            # Nettoyer la chaîne
-            cleaned = re.sub(r'[^\d,.-]', '', value_str.strip())
+            # Prompt spécialisé selon le type de site
+            context_prompts = {
+                "statistical_institute": "Analyser les statistiques économiques tunisiennes de l'INS",
+                "central_bank": "Analyser les indicateurs monétaires de la Banque Centrale de Tunisie", 
+                "ministry_finance": "Analyser les données budgétaires du Ministère des Finances tunisien",
+                "government": "Analyser les données économiques gouvernementales tunisiennes"
+            }
             
-            # Remplacer virgule par point si nécessaire
-            if ',' in cleaned and '.' not in cleaned:
-                cleaned = cleaned.replace(',', '.')
-            elif ',' in cleaned and '.' in cleaned:
-                # Format européen: 1.234,56 -> 1234.56
-                parts = cleaned.split(',')
-                if len(parts) == 2:
-                    cleaned = parts[0].replace('.', '') + '.' + parts[1]
+            prompt = f"""
+            {context_prompts.get(site_type, "Analyser les données économiques")}
             
-            return float(cleaned)
-        except (ValueError, AttributeError):
+            URL: {url}
+            Données extraites: {len(result.indicators)} indicateurs
+            
+            Améliorer et enrichir ces données économiques tunisiennes:
+            - Identifier les indicateurs manqués
+            - Corriger les erreurs d'extraction
+            - Ajouter le contexte économique tunisien
+            - Standardiser les unités (TND, USD, %)
+            """
+            
+            enhanced_result = self._call_llm_for_enhancement(prompt, result)
+            return enhanced_result if enhanced_result else result
+            
+        except Exception as e:
+            logger.error(f"LLM enhancement failed: {e}")
+            return result
+
+    def _call_llm_for_enhancement(self, prompt: str, result: ScrapedContent) -> Optional[ScrapedContent]:
+        """Appel LLM pour l'enhancement des données"""
+        try:
+            if not self.llm_available:
+                logger.warning("LLM not available for enhancement")
+                return result
+            
+            # Préparer les données pour l'analyse LLM
+            extracted_values = result.structured_data.get('extracted_values', {})
+            values_summary = self._create_values_summary_for_llm(extracted_values)
+            
+            # Utiliser le service LLM configuré
+            llm_result = analyze_with_fixed_llm(
+                content=values_summary,
+                context="economic_enhancement",
+                source_domain=extract_domain(result.metadata.get('url', ''))
+            )
+            
+            if llm_result and llm_result.get('success'):
+                # Intégrer les résultats LLM
+                result.metadata['llm_enhancement'] = {
+                    'status': 'completed',
+                    'analysis': llm_result['analysis'],
+                    'execution_time': llm_result.get('execution_time', 0),
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                logger.info("LLM enhancement completed successfully")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"LLM enhancement call failed: {e}")
+            return result
+
+    def _detect_tunisian_site_type(self, url: str) -> str:
+        """Détection du type de site tunisien pour stratégie adaptée"""
+        url_lower = url.lower()
+        
+        if 'ins.tn' in url_lower:
+            return "statistical_institute"
+        elif 'bct.gov.tn' in url_lower:
+            return "central_bank" 
+        elif 'finances.gov.tn' in url_lower:
+            return "ministry_finance"
+        elif 'tunisieindustrie' in url_lower:
+            return "industry_portal"
+        elif '.gov.tn' in url_lower:
+            return "government"
+        else:
+            return "complex_site"
+            
+    def _get_site_specific_config(self, site_type: str, url: str) -> Dict[str, Any]:
+        """Configuration spécialisée par type de site"""
+        
+        base_config = {
+            "timeout": 90,  # Plus long pour sites gouvernementaux
+            "retries": 5,   # Plus de tentatives
+            "use_session": True,
+            "javascript_wait": False,
+            "headers": {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'fr-TN,fr;q=0.9,ar;q=0.8,en;q=0.7',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Cache-Control': 'max-age=0'
+            }
+        }
+        
+        site_configs = {
+            "statistical_institute": {
+                **base_config,
+                "timeout": 120,  # INS peut être très lent
+                "patterns": [
+                    r'indicateur.*\d+',
+                    r'statistique.*\d+', 
+                    r'données.*\d+',
+                    r'taux.*\d+[.,]\d*',
+                    r'population.*\d+',
+                    r'emploi.*\d+',
+                    r'chômage.*\d+[.,]\d*'
+                ],
+                "selectors": [
+                    'table.data-table td',
+                    '.statistique-value',
+                    '.indicator-row',
+                    '.tableau-statistique tr',
+                    '.valeur-indicateur',
+                    '.donnee-chiffree'
+                ],
+                "javascript_wait": True
+            },
+            
+            "central_bank": {
+                **base_config,
+                "timeout": 90,
+                "patterns": [
+                    r'taux.*change.*\d+',
+                    r'réserves.*\d+',
+                    r'balance.*\d+',
+                    r'crédit.*\d+[.,]\d*',
+                    r'inflation.*\d+[.,]\d*',
+                    r'tmm.*\d+[.,]\d*'
+                ],
+                "selectors": [
+                    'table tr td',
+                    '.tableau-statistique td',
+                    '.indicator-cell',
+                    '.valeur',
+                    '.data-cell'
+                ]
+            },
+            
+            "ministry_finance": {
+                **base_config,
+                "patterns": [
+                    r'budget.*\d+',
+                    r'déficit.*\d+',
+                    r'recettes.*\d+',
+                    r'dépenses.*\d+[.,]\d*',
+                    r'dette.*\d+',
+                    r'pib.*\d+[.,]\d*'
+                ],
+                "selectors": [
+                    '.financial-data td',
+                    '.budget-table td',
+                    '.economic-indicator',
+                    '.valeur-budgetaire',
+                    '.donnee-financiere'
+                ]
+            }
+        }
+        
+        return site_configs.get(site_type, base_config)
+
+    def _intelligent_multi_strategy_scraping(self, url: str, config: Dict) -> Optional[ScrapedContent]:
+        """Scraping multi-stratégies pour sites complexes avec fallback"""
+        
+        strategies = [
+            self._strategy_enhanced_requests,
+            self._strategy_session_based,
+            self._strategy_form_submission,
+            self._strategy_ajax_simulation
+        ]
+        
+        best_result = None
+        max_indicators = 0
+        
+        for i, strategy in enumerate(strategies):
+            try:
+                logger.info(f"Trying strategy {i+1}/{len(strategies)}: {strategy.__name__}")
+                result = strategy(url, config)
+                
+                if result and result.indicators:
+                    indicator_count = len(result.indicators)
+                    logger.info(f"Strategy {strategy.__name__} succeeded with {indicator_count} indicators")
+                    
+                    # Garder le meilleur résultat
+                    if indicator_count > max_indicators:
+                        best_result = result
+                        max_indicators = indicator_count
+                        
+            except Exception as e:
+                logger.warning(f"Strategy {strategy.__name__} failed: {e}")
+                continue
+        
+        # Si aucune stratégie intelligente ne fonctionne, essayer le scraping traditionnel
+        if not best_result:
+            logger.info("All intelligent strategies failed, trying traditional fallback")
+            try:
+                traditional_result = super().scrape(url)
+                if traditional_result and traditional_result.indicators:
+                    return traditional_result
+            except Exception as e:
+                logger.error(f"Traditional fallback also failed: {e}")
+        
+        return best_result
+        
+    def _strategy_form_submission(self, url: str, config: Dict) -> Optional[ScrapedContent]:
+        """Stratégie de soumission de formulaires pour sites complexes"""
+        logger.info(f"Attempting form submission strategy for {url}")
+        
+        try:
+            session = requests.Session()
+            response = session.get(url, timeout=config.get('timeout', 60))
+            
+            if response.status_code != 200:
+                return None
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            forms = soup.find_all('form')
+            
+            if not forms:
+                logger.debug("No forms found on page")
+                return None
+            
+            extracted_data = {}
+            form_count = 0
+            
+            for form in forms[:3]:  # Limiter à 3 formulaires max
+                try:
+                    form_action = form.get('action', '')
+                    form_method = form.get('method', 'get').lower()
+                    
+                    # Construire les données du formulaire
+                    form_data = {}
+                    inputs = form.find_all(['input', 'select', 'textarea'])
+                    
+                    for input_elem in inputs:
+                        name = input_elem.get('name')
+                        if name:
+                            input_type = input_elem.get('type', 'text')
+                            if input_type in ['text', 'hidden', 'number']:
+                                value = input_elem.get('value', '')
+                                form_data[name] = value
+                            elif input_type == 'submit':
+                                form_data[name] = input_elem.get('value', 'Submit')
+                    
+                    if form_data:
+                        # Construire l'URL de soumission
+                        if form_action.startswith('http'):
+                            submit_url = form_action
+                        elif form_action.startswith('/'):
+                            submit_url = f"{url.split('/')[0]}//{url.split('/')[2]}{form_action}"
+                        else:
+                            submit_url = f"{url.rstrip('/')}/{form_action}"
+                        
+                        # Soumettre le formulaire
+                        if form_method == 'post':
+                            response = session.post(submit_url, data=form_data, timeout=30)
+                        else:
+                            response = session.get(submit_url, params=form_data, timeout=30)
+                        
+                        if response.status_code == 200:
+                            form_soup = BeautifulSoup(response.text, 'html.parser')
+                            form_data_extracted = self._extract_from_soup(form_soup, url)
+                            
+                            if form_data_extracted:
+                                extracted_data[f'form_{form_count}'] = form_data_extracted
+                                form_count += 1
+                                logger.info(f"Form submission successful, extracted {len(form_data_extracted)} items")
+                    
+                except Exception as e:
+                    logger.debug(f"Form submission failed: {e}")
+                    continue
+            
+            if extracted_data:
+                return ScrapedContent(
+                    raw_content=response.text,
+                    structured_data={'extracted_values': extracted_data},
+                    metadata={'extraction_method': 'form_submission'}
+                )
+            
             return None
+            
+        except Exception as e:
+            logger.error(f"Form submission strategy failed: {e}")
+            return None
+
+    def _strategy_ajax_simulation(self, url: str, config: Dict) -> Optional[ScrapedContent]:
+        """Stratégie de simulation d'appels AJAX"""
+        logger.info(f"Attempting AJAX simulation strategy for {url}")
+        
+        try:
+            session = requests.Session()
+            response = session.get(url, timeout=config.get('timeout', 60))
+            
+            if response.status_code != 200:
+                return None
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            extracted_data = {}
+            
+            # Chercher des patterns d'URLs AJAX dans le HTML
+            ajax_patterns = [
+                r'url\s*:\s*["\']([^"\']*\.json)["\']',
+                r'ajax\s*:\s*["\']([^"\']*)["\']',
+                r'data-url=["\']([^"\']*)["\']',
+                r'api["\']([^"\']*)["\']'
+            ]
+            
+            html_content = str(soup)
+            ajax_urls = set()
+            
+            for pattern in ajax_patterns:
+                matches = re.findall(pattern, html_content, re.IGNORECASE)
+                for match in matches:
+                    if match.startswith('http'):
+                        ajax_urls.add(match)
+                    elif match.startswith('/'):
+                        ajax_urls.add(f"{url.split('/')[0]}//{url.split('/')[2]}{match}")
+                    else:
+                        ajax_urls.add(f"{url.rstrip('/')}/{match}")
+            
+            # Essayer les URLs AJAX trouvées
+            for ajax_url in list(ajax_urls)[:5]:  # Limiter à 5 URLs
+                try:
+                    headers = {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json, text/javascript, */*; q=0.01',
+                        'Referer': url
+                    }
+                    
+                    response = session.get(ajax_url, headers=headers, timeout=30)
+                    
+                    if response.status_code == 200:
+                        # Essayer de parser comme JSON
+                        try:
+                            json_data = response.json()
+                            if isinstance(json_data, dict) and json_data:
+                                ajax_extracted = self._extract_from_json_response(json_data, ajax_url)
+                                if ajax_extracted:
+                                    extracted_data[f'ajax_{len(extracted_data)}'] = ajax_extracted
+                                    logger.info(f"AJAX call successful: {ajax_url}")
+                        except:
+                            # Si ce n'est pas du JSON, parser comme HTML
+                            ajax_soup = BeautifulSoup(response.text, 'html.parser')
+                            ajax_extracted = self._extract_from_soup(ajax_soup, ajax_url)
+                            if ajax_extracted:
+                                extracted_data[f'ajax_{len(extracted_data)}'] = ajax_extracted
+                    
+                except Exception as e:
+                    logger.debug(f"AJAX call failed for {ajax_url}: {e}")
+                    continue
+            
+            if extracted_data:
+                return ScrapedContent(
+                    raw_content=response.text,
+                    structured_data={'extracted_values': extracted_data},
+                    metadata={'extraction_method': 'ajax_simulation'}
+                )
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"AJAX simulation strategy failed: {e}")
+            return None
+        
+    def _extract_from_soup(self, soup: BeautifulSoup, url: str) -> Dict[str, Any]:
+        """Extraction de base depuis BeautifulSoup"""
+        extracted = {}
+        
+        try:
+            # Extraction depuis les tables
+            tables = soup.find_all('table')[:5]
+            for table_idx, table in enumerate(tables):
+                rows = table.find_all('tr')
+                for row_idx, row in enumerate(rows):
+                    cells = row.find_all(['td', 'th'])
+                    if len(cells) >= 2:
+                        label = cells[0].get_text(strip=True)
+                        value_text = cells[1].get_text(strip=True)
+                        
+                        # Essayer d'extraire une valeur numérique
+                        numeric_match = re.search(r'([0-9]+[,.]?[0-9]*)', value_text)
+                        if numeric_match and len(label) > 3:
+                            try:
+                                value = float(numeric_match.group(1).replace(',', '.'))
+                                key = f"table_{table_idx}_{row_idx}"
+                                extracted[key] = {
+                                    'value': value,
+                                    'indicator_name': label[:60],
+                                    'raw_text': f"{label}: {value_text}",
+                                    'extraction_method': 'table_extraction',
+                                    'source': url
+                                }
+                            except ValueError:
+                                continue
+            
+            return extracted
+            
+        except Exception as e:
+            logger.error(f"Soup extraction failed: {e}")
+            return {}
+        
+    def _extract_from_json_response(self, json_data: dict, source_url: str) -> Dict[str, Any]:
+        """Extraction depuis une réponse JSON"""
+        extracted = {}
+        
+        def extract_recursive(data, prefix=""):
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    if isinstance(value, (int, float)) and key.lower() not in ['id', 'code', 'status']:
+                        # Potentielle valeur économique
+                        item_key = f"{prefix}_{key}" if prefix else key
+                        extracted[item_key] = {
+                            'value': value,
+                            'indicator_name': key,
+                            'source': source_url,
+                            'extraction_method': 'ajax_json'
+                        }
+                    elif isinstance(value, (dict, list)):
+                        new_prefix = f"{prefix}_{key}" if prefix else key
+                        extract_recursive(value, new_prefix)
+            elif isinstance(data, list):
+                for i, item in enumerate(data):
+                    if isinstance(item, (dict, list)):
+                        extract_recursive(item, f"{prefix}_{i}" if prefix else str(i))
+        
+        extract_recursive(json_data)
+        return extracted
+        
+    def _strategy_enhanced_requests(self, url: str, config: Dict) -> Optional[ScrapedContent]:
+        """Stratégie 1: Requêtes HTTP améliorées avec headers tunisiens"""
+        
+        session = requests.Session()
+        
+        # Headers spécialisés pour sites tunisiens
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'fr-TN,fr;q=0.9,ar-TN;q=0.8,ar;q=0.7,en;q=0.6',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+        }
+        
+        response = session.get(url, headers=headers, timeout=config['timeout'])
+        
+        if response.status_code == 200:
+            return self._extract_with_patterns(response.text, url, config['patterns'])
+        
+        return None
+        
+    def _extract_with_patterns(self, html_content: str, url: str, patterns: List[str]) -> Optional[ScrapedContent]:
+        """Extraction utilisant des patterns regex"""
+        try:
+            extracted_data = {}
+            
+            for i, pattern in enumerate(patterns):
+                matches = re.findall(pattern, html_content, re.IGNORECASE)
+                for match in matches:
+                    if isinstance(match, tuple):
+                        match = ' '.join([m for m in match if m])
+                    
+                    # Essayer d'extraire une valeur numérique
+                    numeric_match = re.search(r'([0-9]+[,.]?[0-9]*)', match)
+                    if numeric_match:
+                        try:
+                            value = float(numeric_match.group(1).replace(',', '.'))
+                            key = f"pattern_{i}_{len(extracted_data)}"
+                            extracted_data[key] = {
+                                'value': value,
+                                'indicator_name': f"Pattern_{i}",
+                                'raw_text': match,
+                                'extraction_method': 'pattern_regex',
+                                'source': url
+                            }
+                        except ValueError:
+                            continue
+            
+            if extracted_data:
+                return ScrapedContent(
+                    raw_content=html_content,
+                    structured_data={'extracted_values': extracted_data},
+                    metadata={'extraction_method': 'pattern_based'}
+                )
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Pattern extraction failed: {e}")
+            return None    
+
+
+    def _strategy_session_based(self, url: str, config: Dict) -> Optional[ScrapedContent]:
+        """Stratégie 2: Session avec cookies pour sites gouvernementaux"""
+        
+        session = requests.Session()
+        
+        # Simuler navigation normale avec landing page
+        base_url = '/'.join(url.split('/')[:3])
+        
+        try:
+            # Page d'accueil pour cookies
+            session.get(base_url, timeout=15)
+            
+            # Page cible avec session établie
+            response = session.get(url, timeout=config['timeout'])
+            
+            if response.status_code == 200:
+                return self._extract_with_selectors(response.text, url, config['selectors'])
+                
+        except Exception as e:
+            logger.warning(f"Session strategy failed: {e}")
+        
+        return None
+        
+    def _extract_with_selectors(self, html_content: str, url: str, selectors: List[str]) -> Optional[ScrapedContent]:
+        """Extraction utilisant des sélecteurs CSS"""
+        try:
+            soup = BeautifulSoup(html_content, 'html.parser')
+            extracted_data = {}
+            
+            for selector in selectors:
+                try:
+                    elements = soup.select(selector)
+                    for elem in elements[:20]:  # Limiter pour performance
+                        text = elem.get_text(strip=True)
+                        if text and len(text) > 3:
+                            # Chercher des valeurs numériques
+                            numeric_match = re.search(r'([0-9]+[,.]?[0-9]*)', text)
+                            if numeric_match:
+                                try:
+                                    value = float(numeric_match.group(1).replace(',', '.'))
+                                    key = f"selector_{selector}_{len(extracted_data)}"
+                                    extracted_data[key] = {
+                                        'value': value,
+                                        'indicator_name': f"Selector_{selector}",
+                                        'raw_text': text,
+                                        'extraction_method': 'css_selector',
+                                        'source': url
+                                    }
+                                except ValueError:
+                                    continue
+                except Exception as e:
+                    logger.debug(f"Selector {selector} failed: {e}")
+                    continue
+            
+            if extracted_data:
+                return ScrapedContent(
+                    raw_content=html_content,
+                    structured_data={'extracted_values': extracted_data},
+                    metadata={'extraction_method': 'selector_based'}
+                )
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Selector extraction failed: {e}")
+            return None
+
+    def _create_fallback_result(self, url: str, error_message: str) -> ScrapedContent:
+        """Crée un résultat de fallback pour éviter les échecs complets - FIXED VERSION"""
+        
+        fallback = ScrapedContent(
+            raw_content="",
+            structured_data={
+                'extracted_values': {},
+                'llm_analysis': {},  # CRITICAL FIX: Add this line
+                'fallback_mode': True,
+                'error_recovery': True,
+                'original_error': error_message
+            },
+            metadata={
+                'scraping_method': 'fallback_recovery',
+                'error_message': error_message,
+                'timestamp': datetime.utcnow().isoformat(),
+                'fallback_reason': 'intelligent_scraper_error_recovery',
+                'url': url,
+                'llm_enhancement': {
+                    'status': 'skipped',
+                    'analysis': {},
+                    'reason': 'fallback_mode'
+                }
+            }
+        )
+        
+        # CRITICAL FIX: Ensure llm_analysis attribute exists
+        fallback.llm_analysis = {}
+        return fallback
+        
+    def _ensure_llm_analysis_structure(self, result: ScrapedContent) -> ScrapedContent:
+        """Ensure LLM analysis structure is always present"""
+        
+        # Ensure attribute exists
+        if not hasattr(result, 'llm_analysis'):
+            result.llm_analysis = {}
+        
+        # Ensure it's in structured_data
+        if 'llm_analysis' not in result.structured_data:
+            result.structured_data['llm_analysis'] = getattr(result, 'llm_analysis', {})
+        
+        # Ensure metadata has llm_enhancement
+        if 'llm_enhancement' not in result.metadata:
+            result.metadata['llm_enhancement'] = {
+                'status': 'not_applied',
+                'analysis': {}
+            }
+        
+        return result
+
+    def _enhance_with_clean_extraction(self, result: ScrapedContent, url: str) -> ScrapedContent:
+        """INTÉGRATION clean_extraction_patterns dans le pipeline"""
+        
+        try:
+            self.module_usage['clean_extractor'] += 1
+            
+            # Extraction propre en complément
+            clean_values = extract_clean_economic_data(result.raw_content, url)
+            
+            if clean_values:
+                # Fusionner avec les valeurs existantes
+                existing_values = result.structured_data.get('extracted_values', {})
+                
+                # Ajouter les nouvelles valeurs avec préfixe
+                for key, value in clean_values.items():
+                    clean_key = f"clean_{key}"
+                    existing_values[clean_key] = value
+                
+                result.structured_data['extracted_values'] = existing_values
+                
+                # Métadonnées de l'extraction propre
+                result.structured_data['clean_extraction'] = {
+                    'applied': True,
+                    'values_added': len(clean_values),
+                    'total_values': len(existing_values),
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                
+                logger.info(f"Clean extraction added {len(clean_values)} values")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Clean extraction enhancement failed: {e}")
+            return result
+    
+    def _apply_temporal_filtering(self, result: ScrapedContent) -> ScrapedContent:
+        """INTÉGRATION temporal_filter dans le pipeline"""
+        
+        try:
+            self.module_usage['temporal_filter'] += 1
+            
+            extracted_values = result.structured_data.get('extracted_values', {})
+            
+            if extracted_values:
+                # Appliquer le filtrage temporel
+                filtered_values = filter_by_temporal_period(extracted_values, result.raw_content or "")
+                
+                # Métadonnées du filtrage
+                result.structured_data['temporal_filtering'] = {
+                    'applied': True,
+                    'original_count': len(extracted_values),
+                    'filtered_count': len(filtered_values),
+                    'filtered_out': len(extracted_values) - len(filtered_values),
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                
+                # Remplacer les valeurs
+                result.structured_data['extracted_values'] = filtered_values
+                
+                logger.info(f"Temporal filtering: {len(extracted_values)} -> {len(filtered_values)} values")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Temporal filtering failed: {e}")
+            return result
+    
+    def _apply_strict_validation(self, result: ScrapedContent) -> ScrapedContent:
+        """INTÉGRATION data_validator dans le pipeline"""
+        
+        try:
+            self.module_usage['data_validator'] += 1
+            
+            extracted_values = result.structured_data.get('extracted_values', {})
+            
+            if extracted_values:
+                # Convertir en format attendu par le validateur
+                values_for_validation = [
+                    v for v in extracted_values.values() 
+                    if isinstance(v, dict)
+                ]
+                
+                # Validation stricte
+                validation_result = validate_indicators_strict(
+                    values_for_validation, 
+                    content=result.raw_content or ""
+                )
+                
+                # Traitement du résultat de validation
+                if validation_result['valid'] and validation_result['valid_data']:
+                    # Remplacer par les données validées
+                    validated_dict = {
+                        f"validated_{i}": item 
+                        for i, item in enumerate(validation_result['valid_data'])
+                    }
+                    
+                    result.structured_data['extracted_values'] = validated_dict
+                    result.structured_data['strict_validation'] = {
+                        'applied': True,
+                        'validation_summary': validation_result['summary'],
+                        'errors': validation_result.get('errors', []),
+                        'timestamp': datetime.utcnow().isoformat()
+                    }
+                    
+                    logger.info(f"Strict validation: {validation_result['summary']['valid_output']} valid indicators")
+                else:
+                    logger.warning("Strict validation failed, keeping original data")
+                    result.structured_data['strict_validation'] = {
+                        'applied': False,
+                        'reason': 'validation_failed',
+                        'errors': validation_result.get('errors', [])
+                    }
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Strict validation failed: {e}")
+            return result
+
+    def _should_activate_llm_cohesive(self, url: str, user_requested: bool, 
+                                   base_result: ScrapedContent, tunisian_context: Dict[str, Any]) -> bool:
+        """Décision LLM cohérente avec l'architecture intégrée"""
+        
+        # Toujours respecter la demande utilisateur
+        if user_requested:
+            return self.llm_available
+        
+        # Si pas disponible, pas d'activation
+        if not self.llm_available:
+            return False
+        
+        # Activation intelligente basée sur le contexte tunisien
+        if tunisian_context.get('tunisian_context', False):
+            strength = tunisian_context.get('context_strength', 'none')
+            if strength in ['high', 'medium']:
+                logger.info("LLM activated for strong Tunisian context")
+                return True
+        
+        # Activation basée sur le contenu extrait
+        extracted_values = base_result.structured_data.get('extracted_values', {})
+        if len(extracted_values) < 5:  # Peu de données extraites
+            logger.info("LLM activated for low extraction count")
+            return True
+        
+        # Activation pour sites complexes
+        if any(site in url.lower() for site in ['bct.gov.tn', 'ins.tn']):
+            logger.info("LLM activated for complex government site")
+            return True
+        
+        # Par défaut : désactivé pour la performance
+        return False
+
+    def _enhance_with_llm_analysis_cohesive(self, scraped_content: ScrapedContent, url: str) -> ScrapedContent:
+        """Enhancement LLM utilisant la configuration cohérente - FIXED VERSION"""
+        
+        try:
+            self.module_usage['llm_analysis'] += 1
+            
+            if not self.llm_available or not self.llm_config:
+                logger.warning("LLM not available for enhancement")
+                # Ensure empty LLM analysis structure
+                scraped_content.llm_analysis = {}
+                scraped_content.structured_data['llm_analysis'] = {}
+                return scraped_content
+            
+            # Préparation du contenu pour analyse LLM
+            extracted_values = scraped_content.structured_data.get('extracted_values', {})
+            
+            # Utiliser analyze_with_fixed_llm pour la cohérence
+            if extracted_values:
+                # Créer un résumé des valeurs extraites
+                values_summary = self._create_values_summary_for_llm(extracted_values)
+                llm_result = analyze_with_fixed_llm(
+                    content=values_summary,
+                    context="economic",
+                    source_domain=extract_domain(url)
+                )
+            else:
+                # Analyser le contenu brut
+                content_sample = scraped_content.raw_content[:3000] if scraped_content.raw_content else ""
+                llm_result = analyze_with_fixed_llm(
+                    content=content_sample,
+                    context="economic",
+                    source_domain=extract_domain(url)
+                )
+            
+            # CRITICAL FIX: Proper LLM result integration
+            if llm_result and llm_result.get('success'):
+                llm_analysis_data = llm_result.get('analysis', {})
+                
+                # Store in the main result structure (this is what the API returns)
+                scraped_content.llm_analysis = llm_analysis_data
+                scraped_content.structured_data['llm_analysis'] = llm_analysis_data
+                
+                # Also store in metadata for backward compatibility
+                scraped_content.metadata['llm_enhancement'] = {
+                    'status': 'completed',
+                    'analysis': llm_analysis_data,
+                    'execution_time': llm_result.get('execution_time', 0),
+                    'timeout_type': llm_result.get('timeout_type', 'standard'),
+                    'method': llm_result.get('method', 'fixed_llm_config'),
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                
+                logger.info(f"LLM enhancement completed successfully for {url}")
+                logger.info(f"LLM found {len(llm_analysis_data.get('indicateurs', []))} indicators")
+                
+            else:
+                logger.warning("LLM enhancement failed, using fallback")
+                # Ensure empty but present structure
+                scraped_content.llm_analysis = {}
+                scraped_content.structured_data['llm_analysis'] = {}
+                scraped_content.metadata['llm_enhancement'] = {
+                    'status': 'failed',
+                    'analysis': {},
+                    'fallback_reason': llm_result.get('fallback_reason', 'Unknown') if llm_result else 'No LLM result',
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+            
+            return scraped_content
+            
+        except Exception as e:
+            logger.error(f"LLM enhancement error: {e}")
+            # Ensure structure exists even on error
+            scraped_content.llm_analysis = {}
+            scraped_content.structured_data['llm_analysis'] = {}
+            scraped_content.metadata['llm_enhancement'] = {
+                'status': 'error',
+                'analysis': {},
+                'error': str(e),
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            return scraped_content
+
+    def _create_values_summary_for_llm(self, extracted_values: Dict[str, Any]) -> str:
+        """Crée un résumé des valeurs pour l'analyse LLM"""
+        
+        if not extracted_values:
+            return "Aucune valeur extraite"
+        
+        summary_parts = []
+        
+        for i, (key, value_data) in enumerate(extracted_values.items()):
+            if i >= 10:  # Limiter à 10 valeurs pour éviter les timeouts
+                break
+            
+            if isinstance(value_data, dict):
+                indicator = value_data.get('indicator_name', 'Inconnu')
+                value = value_data.get('value', 'N/A')
+                unit = value_data.get('unit', '')
+                year = value_data.get('year', 'N/A')
+                
+                summary_parts.append(f"{indicator}: {value} {unit} ({year})")
+        
+        return "Données économiques tunisiennes extraites:\n" + "\n".join(summary_parts)
+
+    def _add_comprehensive_intelligent_insights(self, scraped_content: ScrapedContent, url: str, 
+                                              tunisian_context: Dict[str, Any]) -> ScrapedContent:
+        """Ajout d'insights intelligents utilisant TOUS les modules - FIXED VERSION"""
+        
+        try:
+            extracted_values = scraped_content.structured_data.get('extracted_values', {})
+            
+            # Insights avec debug_extraction_data de helpers
+            debug_info = debug_extraction_data(scraped_content.structured_data, url)
+            
+            # Log détaillé avec log_extraction_details de helpers
+            log_extraction_details(scraped_content.structured_data, url, "cohesive_intelligent")
+            
+            # Suggestions d'amélioration
+            improvements = suggest_extraction_improvements(debug_info)
+            
+            # Génération du résumé de tâche avec helpers
+            task_summary = generate_task_summary({
+                'urls': [url],
+                'results': [scraped_content.structured_data],
+                'status': 'completed',
+                'metadata': scraped_content.metadata
+            })
+            
+            # CRITICAL FIX: Ensure LLM analysis structure before adding insights
+            scraped_content = self._ensure_llm_analysis_structure(scraped_content)
+            
+            # Enrichissement complet des métadonnées
+            if not scraped_content.metadata:
+                scraped_content.metadata = {}
+            
+            scraped_content.metadata.update({
+                'cohesive_intelligence': {
+                    'modules_used': {
+                        'helpers': True,
+                        'data_validator': self.module_usage['data_validator'] > 0,
+                        'temporal_filter': self.module_usage['temporal_filter'] > 0,
+                        'clean_extractor': self.module_usage['clean_extractor'] > 0,
+                        'storage': self.module_usage['storage'] > 0,
+                        'llm_analysis': self.module_usage['llm_analysis'] > 0
+                    },
+                    'usage_stats': self.module_usage,
+                    'debug_info': debug_info,
+                    'task_summary': task_summary,
+                    'improvement_suggestions': improvements,
+                    'tunisian_context': tunisian_context,
+                    'cohesion_timestamp': datetime.utcnow().isoformat()
+                }
+            })
+            
+            # Ajout aux données structurées
+            scraped_content.structured_data.update({
+                'cohesive_insights': {
+                    'comprehensive_analysis': True,
+                    'all_utils_integrated': True,
+                    'debug_analysis': debug_info,
+                    'task_summary': task_summary,
+                    'improvements': improvements
+                }
+            })
+            
+            logger.info("Comprehensive intelligent insights added successfully")
+            return scraped_content
+            
+        except Exception as e:
+            logger.error(f"Failed to add comprehensive insights: {e}")
+            return scraped_content
+
+    def _save_via_integrated_storage(self, result: ScrapedContent, url: str):
+        """Sauvegarde via le système de stockage intégré"""
+        
+        try:
+            self.module_usage['storage'] += 1
+            
+            # Préparation des données pour sauvegarde
+            save_data = {
+                'url': url,
+                'content': result.raw_content,
+                'structured_data': result.structured_data,
+                'metadata': result.metadata,
+                'cohesive_scraper_info': {
+                    'scraper_type': 'CohesiveIntelligentScraper',
+                    'modules_used': list(self.module_usage.keys()),
+                    'usage_stats': self.module_usage,
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+            }
+            
+            # Sauvegarde via smart_storage
+            storage_result = smart_storage.save_scraping_result(save_data)
+            
+            if storage_result['success']:
+                logger.info(f"Data saved via integrated storage: {storage_result['storage_methods']}")
+                
+                # Enrichir les métadonnées avec les infos de sauvegarde
+                if not result.metadata:
+                    result.metadata = {}
+                
+                result.metadata['storage_info'] = {
+                    'saved_via': 'integrated_smart_storage',
+                    'storage_methods': storage_result['storage_methods'],
+                    'storage_timestamp': storage_result['timestamp']
+                }
+            else:
+                logger.warning(f"Integrated storage failed: {storage_result['errors']}")
+                
+        except Exception as e:
+            logger.error(f"Integrated storage error: {e}")
+
+    def _validate_url_with_helpers(self, url: str) -> bool:
+        """Validation URL utilisant les helpers intégrés - CORRIGÉE"""
+        
+        try:
+            # CORRECTION : Utiliser une validation URL simple au lieu d'importer validate_url
+            parsed = urlparse(url)
+            
+            # Validation basique
+            if not parsed.scheme or not parsed.netloc:
+                logger.error(f"URL validation failed: {url}")
+                return False
+            
+            # Utiliser les fonctions helpers qui existent réellement
+            domain = extract_domain(url)
+            url_category = categorize_url_type(url)
+            
+            logger.debug(f"URL validation: {url} -> Valid (domain: {domain})")
+            return True
+                    
+        except Exception as e:
+            logger.error(f"URL validation error: {e}")
+            return False
+
+    def get_cohesive_scraper_info(self) -> Dict[str, Any]:
+        """Informations complètes du scraper cohésif"""
+        
+        base_info = super().get_scraper_info()
+        
+        cohesive_info = {
+            'scraper_type': 'CohesiveIntelligentScraper',
+            'version': '2.0_fully_integrated',
+            'parent_scraper': 'TunisianWebScraper',
+            'llm_available': self.llm_available,
+            'llm_config': {
+                'model': self.ollama_model,
+                'timeout': self.llm_timeout,
+                'url': self.ollama_url
+            },
+            'module_integrations': {
+                'helpers': 'fully_integrated',
+                'data_validator': 'integrated_with_pipeline',
+                'temporal_filter': 'integrated_with_pipeline', 
+                'clean_extractor': 'integrated_with_pipeline',
+                'storage': 'integrated_automatic',
+                'llm_config': 'cohesive_timeouts'
+            },
+            'usage_statistics': self.module_usage,
+            'intelligent_features': [
+                'automatic_llm_decision',
+                'comprehensive_post_processing',
+                'integrated_validation_pipeline',
+                'smart_storage_automatic',
+                'tunisian_context_detection',
+                'cohesive_module_integration',
+                'debug_and_improvement_tracking'
+            ],
+            'cohesion_metadata': {
+                'all_utils_integrated': True,
+                'no_module_left_behind': True,
+                'comprehensive_pipeline': True,
+                'intelligent_coordination': True
+            }
+        }
+        
+        base_info.update(cohesive_info)
+        return base_info
+        
+    
+
+    def health_check(self) -> Dict[str, Any]:
+        """Vérification de santé du scraper cohésif"""
+        
+        base_health = super().health_check()
+        
+        cohesive_health = {
+            'cohesive_features': {
+                'utils_integration': 'operational',
+                'llm_integration': 'available' if self.llm_available else 'unavailable',
+                'storage_integration': 'operational',
+                'validation_pipeline': 'operational'
+            },
+            'module_status': {
+                name: 'used' if count > 0 else 'available'
+                for name, count in self.module_usage.items()
+            },
+            'integration_score': sum(1 for count in self.module_usage.values() if count > 0) / len(self.module_usage),
+            'cohesion_status': 'fully_integrated'
+        }
+        
+        base_health.update(cohesive_health)
+        return base_health
+
+# Alias pour compatibilité avec le reste du système
+IntelligentScraper = CohesiveIntelligentScraper

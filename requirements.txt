@@ -31,6 +31,7 @@ lxml==4.9.3
 html5lib==1.1
 aiohttp==3.9.1
 httpx==0.25.2
+pypdf>=3.0.0
 
 # ===================================
 # WEB SCRAPING - Advanced
@@ -39,6 +40,7 @@ selenium==4.15.2
 playwright==1.40.0
 webdriver-manager==4.0.1
 scrapy==2.11.0
+openpyxl==3.1.2  
 
 # ===================================
 # FAKE DATA & PROXY
@@ -109,3 +111,10 @@ readability-lxml==0.8.1
 # TYPE HINTS & COMPATIBILITY
 # ===================================
 typing-extensions==4.8.0
+
+# ===================================
+# LANGGRAPH & AUTOGEN - Superviseur
+# ===================================
+langgraph==0.0.26
+pyautogen==0.2.0
+tiktoken==0.5.2

@@ -1,282 +1,200 @@
 #!/usr/bin/env python3
 """
-Worker Celery pour l'agentic scraper
-Point d'entrée principal pour le worker avec gestion d'erreurs et diagnostics
+Worker Celery intelligent avec diagnostics automatiques
+Version simplifiée sans paramètres complexes
 """
-
-import sys
 import os
+import sys
+import time
 import logging
-from datetime import datetime
-from app.config.settings import settings
+import argparse
+from typing import Dict, Any, List, Optional
 
-# Configuration des logs pour le worker
+# Configuration du logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-def main():
-    """Fonction principale du worker avec diagnostics intégrés"""
-    logger.info(f"🚀 WORKER STARTING AT {datetime.utcnow()}")
+def wait_for_services(max_retries: int = 30) -> bool:
+    """Attendre que les services soient prêts"""
+    logger.info("⏳ Attente des services...")
+    
+    services_ready = False
+    for attempt in range(max_retries):
+        try:
+            # Test Redis
+            import redis
+            redis_url = os.getenv('REDIS_URL', 'redis://redis:6379/0')
+            r = redis.from_url(redis_url)
+            r.ping()
+            
+            # Test base de données
+            from app.models.database import test_db_connection
+            if test_db_connection():
+                services_ready = True
+                break
+                
+        except Exception as e:
+            logger.debug(f"Tentative {attempt + 1}/{max_retries}: {e}")
+            time.sleep(2)
+    
+    if services_ready:
+        logger.info("✅ Services prêts")
+        return True
+    else:
+        logger.error("❌ Services non disponibles après attente")
+        return False
+
+def run_basic_diagnostics() -> Dict[str, Any]:
+    """Diagnostics de base du système"""
+    logger.info("🧪 Diagnostics de base...")
+    
+    diagnostics = {
+        'timestamp': time.time(),
+        'status': 'unknown',
+        'checks': {}
+    }
     
     try:
-        # Test des imports critiques avant de démarrer Celery
-        logger.info("🔧 Testing critical imports...")
-        
-        # Test 1: Configuration
+        # 1. Test configuration
         try:
-            from app.config.settings import settings
-            logger.info(f"✅ Settings imported - DEFAULT_DELAY: {settings.DEFAULT_DELAY}")
+            from app.config.settings import get_settings
+            settings = get_settings()
+            diagnostics['checks']['configuration'] = {
+                'status': 'ok',
+                'database_url': bool(settings.database_url),
+                'redis_url': bool(settings.redis_url)
+            }
         except Exception as e:
-            logger.error(f"❌ Settings import failed: {e}")
-            return 1
+            diagnostics['checks']['configuration'] = {
+                'status': 'error',
+                'error': str(e)
+            }
         
-        # Test 2: Scrapers avec gestion des attributs optionnels
+        # 2. Test base de données
         try:
-            from app.scrapers.traditional import TunisianWebScraper
-            from app.scrapers.intelligent import IntelligentScraper
-            
-            # Test de création d'instances
-            traditional = TunisianWebScraper()
-            intelligent = IntelligentScraper()
-            
-            # 🔥 CORRECTION: Utiliser get_scraper_info() pour éviter les AttributeError
-            traditional_info = traditional.get_scraper_info()
-            logger.info(f"✅ Traditional scraper: delay={traditional_info.get('delay', 'unknown')}, max_length={traditional_info.get('max_content_length', 'unknown')}")
-            
-            # Pour intelligent scraper, utiliser getattr avec fallback
-            intelligent_delay = getattr(intelligent, 'delay', 'unknown')
-            logger.info(f"✅ Intelligent scraper: delay={intelligent_delay}")
-            
+            from app.models.database import test_db_connection
+            db_ok = test_db_connection()
+            diagnostics['checks']['database'] = {
+                'status': 'ok' if db_ok else 'error',
+                'connected': db_ok
+            }
         except Exception as e:
-            logger.error(f"❌ Scrapers creation failed: {e}")
-            import traceback
-            traceback.print_exc()
-            return 1
+            diagnostics['checks']['database'] = {
+                'status': 'error',
+                'error': str(e)
+            }
         
-        # Test 3: Agent scraper
-        try:
-            from app.agents.scraper_agent import ScraperAgent
-            agent = ScraperAgent("test_worker_agent")
-            logger.info("✅ ScraperAgent created successfully")
-        except Exception as e:
-            logger.error(f"❌ ScraperAgent creation failed: {e}")
-            import traceback
-            traceback.print_exc()
-            return 1
-        
-        # Test 4: Tâches de scraping avec nouvelle structure
-        try:
-            # Import du module sans importer la fonction directement
-            import app.tasks.scraping_tasks
-            
-            # Utiliser l'enregistrement des tâches
-            from app.tasks.scraping_tasks import register_tasks
-            tasks = register_tasks()
-            
-            logger.info("✅ Scraping tasks imported successfully")
-        except Exception as e:
-            logger.error(f"❌ Scraping tasks import failed: {e}")
-            import traceback
-            traceback.print_exc()
-            return 1
-        
-        # Test 5: Import de l'app Celery
-        try:
-            from app.celery_app import celery_app
-            logger.info("✅ Celery app imported successfully")
-        except Exception as e:
-            logger.error(f"❌ Celery app import failed: {e}")
-            import traceback
-            traceback.print_exc()
-            return 1
-        
-        # Vérification des tâches enregistrées
-        registered_tasks = list(celery_app.tasks.keys())
-        logger.info(f"📋 Registered tasks: {len(registered_tasks)}")
-        
-        important_tasks = [
-            'app.tasks.scraping_tasks.enqueue_scraping_task',
-            'app.celery_app.test_task',
-            'app.celery_app.debug_communication'
-        ]
-        
-        missing_tasks = []
-        for task in important_tasks:
-            if task in registered_tasks:
-                logger.info(f"✅ Task available: {task}")
-            else:
-                logger.warning(f"❌ Task missing: {task}")
-                missing_tasks.append(task)
-        
-        if missing_tasks:
-            logger.error(f"❌ Critical tasks missing: {missing_tasks}")
-            logger.info("📋 Available tasks:")
-            for task in sorted(registered_tasks):
-                logger.info(f"   - {task}")
-            return 1
-        
-        # Test de connectivité Redis
+        # 3. Test Redis
         try:
             import redis
             redis_url = os.getenv('REDIS_URL', 'redis://redis:6379/0')
             r = redis.from_url(redis_url)
             r.ping()
-            logger.info(f"✅ Redis connection OK: {redis_url}")
+            diagnostics['checks']['redis'] = {
+                'status': 'ok',
+                'connected': True
+            }
         except Exception as e:
-            logger.error(f"❌ Redis connection failed: {e}")
-            return 1
+            diagnostics['checks']['redis'] = {
+                'status': 'error',
+                'error': str(e)
+            }
         
-        logger.info("✅ ALL DIAGNOSTICS PASSED - Starting Celery worker...")
+        # 4. Test imports principaux
+        try:
+            from app.agents.smart_coordinator import SmartScrapingCoordinator
+            from app.tasks.scraping_tasks import smart_scrape_task
+            diagnostics['checks']['imports'] = {
+                'status': 'ok',
+                'coordinator': True,
+                'tasks': True
+            }
+        except Exception as e:
+            diagnostics['checks']['imports'] = {
+                'status': 'error',
+                'error': str(e)
+            }
         
-        # Démarrer le worker Celery
-        celery_app.start()
-        
-        return 0
-        
-    except KeyboardInterrupt:
-        logger.info("ℹ️ Worker stopped by user")
-        return 0
-    except Exception as e:
-        logger.error(f"💥 Worker startup failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return 1
-
-def run_diagnostics_only():
-    """Lance seulement les diagnostics sans démarrer le worker"""
-    logger.info("🔍 RUNNING DIAGNOSTICS ONLY...")
-    
-    try:
-        # Import et test de tous les composants
-        from app.config.settings import settings
-        from app.scrapers.traditional import TunisianWebScraper
-        from app.scrapers.intelligent import IntelligentScraper
-        from app.agents.scraper_agent import ScraperAgent
-        from app.models.schemas import ScrapeRequest, AnalysisType
-        import app.tasks.scraping_tasks
-        from app.celery_app import celery_app
-        
-        # Test de création d'instances avec gestion d'erreurs
-        traditional = TunisianWebScraper()
-        intelligent = IntelligentScraper()
-        agent = ScraperAgent("diagnostic_agent")
-        
-        # Test d'une requête de scraping
-        request = ScrapeRequest(
-            urls=["https://httpbin.org/json"], 
-            analysis_type=AnalysisType.STANDARD
+        # Déterminer statut global
+        all_ok = all(
+            check.get('status') == 'ok' 
+            for check in diagnostics['checks'].values()
         )
         
-        logger.info("✅ ALL COMPONENTS LOADED SUCCESSFULLY")
+        diagnostics['status'] = 'ok' if all_ok else 'error'
         
-        # 🔥 CORRECTION: Utiliser les méthodes sécurisées pour obtenir les infos
-        try:
-            traditional_info = traditional.get_scraper_info()
-            logger.info(f"✅ Traditional scraper: delay={traditional_info.get('delay', 'unknown')}, max_length={traditional_info.get('max_content_length', 'unknown')}")
-        except Exception as e:
-            # Fallback si get_scraper_info n'existe pas
-            delay = getattr(traditional, 'delay', 'unknown')
-            max_length = getattr(traditional, 'max_content_length', 'unknown')
-            logger.info(f"✅ Traditional scraper: delay={delay}, max_length={max_length}")
-        
-        intelligent_delay = getattr(intelligent, 'delay', 'unknown')
-        logger.info(f"✅ Intelligent scraper: delay={intelligent_delay}")
-        
-        agent_name = getattr(agent, 'name', 'unknown')
-        logger.info(f"✅ Agent: {agent_name}")
-        
-        logger.info(f"✅ Test request: {len(request.urls)} URLs, type={request.analysis_type}")
-        
-        # Vérifier les tâches Celery
-        registered_tasks = list(celery_app.tasks.keys())
-        logger.info(f"✅ Celery tasks: {len(registered_tasks)}")
-        
-        return True
+        logger.info(f"📊 Diagnostics: {diagnostics['status']}")
+        return diagnostics
         
     except Exception as e:
-        logger.error(f"❌ DIAGNOSTIC FAILED: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        logger.error(f"❌ Erreur diagnostics: {e}")
+        diagnostics['status'] = 'error'
+        diagnostics['error'] = str(e)
+        return diagnostics
 
-def run_extended_diagnostics():
-    """Diagnostics étendus avec tests approfondis"""
-    logger.info("🔬 RUNNING EXTENDED DIAGNOSTICS...")
+def start_celery_worker(concurrency: int = 1, loglevel: str = 'info') -> None:
+    """Démarrer le worker Celery"""
+    logger.info("🔧 Démarrage du worker Celery...")
     
     try:
-        # Test des imports avec informations détaillées
-        logger.info("📦 Testing module imports...")
-        
-        # Configuration
-        from app.config.settings import settings
-        logger.info(f"   ✅ Settings: DEFAULT_DELAY={settings.DEFAULT_DELAY}, TIMEOUT={settings.REQUEST_TIMEOUT}")
-        
-        # Scrapers
-        from app.scrapers.traditional import TunisianWebScraper
-        from app.scrapers.intelligent import IntelligentScraper
-        
-        traditional = TunisianWebScraper()
-        intelligent = IntelligentScraper()
-        
-        # Test des méthodes clés
-        traditional_methods = [method for method in dir(traditional) if not method.startswith('_')]
-        intelligent_methods = [method for method in dir(intelligent) if not method.startswith('_')]
-        
-        logger.info(f"   ✅ Traditional scraper: {len(traditional_methods)} public methods")
-        logger.info(f"   ✅ Intelligent scraper: {len(intelligent_methods)} public methods")
-        
-        # Agent
-        from app.agents.scraper_agent import ScraperAgent
-        agent = ScraperAgent("extended_diagnostic_agent")
-        agent_status = agent.get_scraper_status()
-        logger.info(f"   ✅ Agent status: {agent_status.get('agent_name', 'unknown')}")
-        
-        # Base de données
-        from app.models.database import get_db
-        with next(get_db()) as db:
-            # Test simple de connexion
-            result = db.execute("SELECT 1").fetchone()
-            logger.info(f"   ✅ Database connection: result={result}")
-        
-        # Celery
+        # Import de l'app Celery
         from app.celery_app import celery_app
-        registered_tasks = list(celery_app.tasks.keys())
-        important_tasks = [t for t in registered_tasks if 'app.' in t]
-        logger.info(f"   ✅ Celery: {len(registered_tasks)} total tasks, {len(important_tasks)} app tasks")
         
-        # Redis
-        import redis
-        redis_url = os.getenv('REDIS_URL', 'redis://redis:6379/0')
-        r = redis.from_url(redis_url)
-        redis_info = r.info()
-        logger.info(f"   ✅ Redis: version={redis_info.get('redis_version', 'unknown')}")
+        # Configuration du worker
+        worker_args = [
+            'worker',
+            f'--concurrency={concurrency}',
+            f'--loglevel={loglevel}',
+            '--queues=scraping,monitoring,testing',
+            '--pool=solo' if os.name == 'nt' else '--pool=prefork',  # Windows compatibility
+        ]
         
-        logger.info("🎉 EXTENDED DIAGNOSTICS COMPLETED SUCCESSFULLY")
-        return True
+        logger.info(f"🚀 Lancement worker avec args: {' '.join(worker_args)}")
+        
+        # Démarrer le worker
+        celery_app.worker_main(worker_args)
+        
+    except KeyboardInterrupt:
+        logger.info("🛑 Arrêt du worker demandé")
+    except Exception as e:
+        logger.error(f"❌ Erreur worker: {e}")
+        sys.exit(1)
+
+def main():
+    """Point d'entrée principal"""
+    parser = argparse.ArgumentParser(description='Worker Celery intelligent')
+    parser.add_argument('--concurrency', type=int, default=1, help='Nombre de processus worker')
+    parser.add_argument('--loglevel', default='info', choices=['debug', 'info', 'warning', 'error'])
+    parser.add_argument('--skip-diagnostics', action='store_true', help='Ignorer les diagnostics')
+    parser.add_argument('--skip-wait', action='store_true', help='Ignorer l\'attente des services')
+    
+    args = parser.parse_args()
+    
+    try:
+        # 1. Attendre les services (sauf si skip)
+        if not args.skip_wait:
+            if not wait_for_services():
+                logger.error("❌ Services non disponibles")
+                sys.exit(1)
+        
+        # 2. Diagnostics de base (sauf si skip)
+        if not args.skip_diagnostics:
+            diagnostics = run_basic_diagnostics()
+            if diagnostics['status'] != 'ok':
+                logger.warning("⚠️ Diagnostics avec erreurs, mais démarrage quand même")
+        
+        # 3. Démarrer le worker
+        start_celery_worker(
+            concurrency=args.concurrency,
+            loglevel=args.loglevel
+        )
         
     except Exception as e:
-        logger.error(f"❌ EXTENDED DIAGNOSTICS FAILED: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        logger.error(f"❌ Erreur fatale: {e}")
+        sys.exit(1)
 
 if __name__ == '__main__':
-    # Vérifier les arguments de ligne de commande
-    if len(sys.argv) > 1:
-        if sys.argv[1] == '--diagnose-only':
-            # Mode diagnostic seulement
-            success = run_diagnostics_only()
-            sys.exit(0 if success else 1)
-        elif sys.argv[1] == '--extended-diagnostics':
-            # Mode diagnostic étendu
-            success = run_extended_diagnostics()
-            sys.exit(0 if success else 1)
-        else:
-            logger.warning(f"Unknown argument: {sys.argv[1]}")
-            logger.info("Available options: --diagnose-only, --extended-diagnostics")
-    
-    # Mode normal - démarrer le worker
-    sys.exit(main())
+    main()

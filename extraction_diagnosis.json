@@ -1,0 +1,458 @@
+{
+  "timestamp": "2025-08-27",
+  "diagnosis": "URLs extraction failure analysis",
+  "original_urls": [
+    {
+      "url": "https://www.ins.tn/statistiques/50",
+      "status_code": 200,
+      "content_length": 446808,
+      "title": "Statistiques | INS",
+      "tables_found": 3,
+      "numeric_values": [
+        "4 MD",
+        "9 MD",
+        "7 MD",
+        "5,3%",
+        "1 MD",
+        "2 MD",
+        "281%",
+        "283%",
+        "282%",
+        "20%",
+        "5 MD",
+        "3 MD",
+        "8 MD",
+        "29%",
+        "0,6%",
+        "202.1%"
+      ],
+      "potential_indicators": [
+        "export",
+        "Taux",
+        "indice",
+        "emploi",
+        "prix",
+        "taux",
+        "Indice",
+        "Chômage",
+        "import",
+        "Population",
+        "Prix",
+        "production",
+        "Production",
+        "déficit",
+        "cours",
+        "Emploi",
+        "salaire",
+        "Salaire",
+        "population"
+      ],
+      "year_mentions": [
+        "2025",
+        "2010",
+        "2020",
+        "2001",
+        "2014",
+        "2005",
+        "2000",
+        "2013",
+        "2017",
+        "2016",
+        "2007",
+        "2012",
+        "2023",
+        "2006",
+        "2024",
+        "2003",
+        "2009",
+        "2004",
+        "2002",
+        "2018",
+        "2021",
+        "2019",
+        "2015",
+        "2011",
+        "2008",
+        "2022"
+      ],
+      "tables_detail": [
+        {
+          "table_index": 0,
+          "rows": 10,
+          "headers": [
+            "NoFilter",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "has_numeric_data": true
+        },
+        {
+          "table_index": 1,
+          "rows": 10,
+          "headers": [
+            "NoFilter",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "has_numeric_data": true
+        },
+        {
+          "table_index": 2,
+          "rows": 10,
+          "headers": [
+            "NoFilter",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "has_numeric_data": true
+        }
+      ],
+      "data_links": [
+        {
+          "href": "/en/statistiques/50",
+          "text": "EN"
+        },
+        {
+          "href": "/ar/statistiques/50",
+          "text": "AR"
+        },
+        {
+          "href": "/statistiques/45",
+          "text": "Statistiques par thèmes"
+        },
+        {
+          "href": "http://dataportal.ins.tn/",
+          "text": "Recherche"
+        },
+        {
+          "href": "http://dataportal.ins.tn/fr/DataAnalysis",
+          "text": "Analyse de Données"
+        },
+        {
+          "href": "http://dataportal.ins.tn/fr/Map",
+          "text": "Cartes"
+        },
+        {
+          "href": "http://dataportal.ins.tn/fr/DataQuery",
+          "text": "Requête de données"
+        }
+      ]
+    },
+    {
+      "url": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique_a.jsp?params=PL212010",
+      "status_code": 200,
+      "content_length": 136628,
+      "title": "Statistique - MOYENNES DES COURS DU MARCHE INTERBANCAIRE ANNUEL",
+      "tables_found": 3,
+      "numeric_values": [],
+      "potential_indicators": [
+        "Taux",
+        "Cours",
+        "Prix",
+        "COURS",
+        "Dette",
+        "taux",
+        "PIB",
+        "cours",
+        "Indice",
+        "production",
+        "dette"
+      ],
+      "year_mentions": [
+        "2010",
+        "2020",
+        "2001",
+        "2014",
+        "2005",
+        "2000",
+        "2013",
+        "2017",
+        "2016",
+        "2007",
+        "2012",
+        "2023",
+        "2006",
+        "2024",
+        "2003",
+        "2009",
+        "2004",
+        "2002",
+        "2018",
+        "2021",
+        "2019",
+        "2015",
+        "2011",
+        "2008",
+        "2022"
+      ],
+      "tables_detail": [
+        {
+          "table_index": 0,
+          "rows": 1,
+          "headers": [
+            "Indicateurs",
+            "2019",
+            "2020",
+            "2021",
+            "2022",
+            "2023",
+            "2024"
+          ],
+          "has_numeric_data": true
+        },
+        {
+          "table_index": 1,
+          "rows": 23,
+          "headers": [
+            "Indicateurs",
+            "2019",
+            "2020",
+            "2021",
+            "2022",
+            "2023",
+            "2024",
+            "",
+            "Dinar Algérien",
+            "0,2450"
+          ],
+          "has_numeric_data": true
+        },
+        {
+          "table_index": 2,
+          "rows": 3,
+          "headers": [
+            "Indicateurs",
+            "Dinar Algérien\nRyal Saoudien\nDollar Canadien\nCouronne Danoise\nDollar des USA\nLivre Sterling\nYen Japonais\nDirham Marocain\nCouronne Norvégienne\nCouronne Suedoise\nFranc Suisse\nDinar Koweitien\nDirham des EAU\nEURO\nDinar Libyen\nOuguia Mauritanienne(MRO)\nDinar de Bahrein\nRyal  du Quatar\nYuan Chinois\nOuguia Mauritanienne(MRU)",
+            "Date debut :\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \n\n31/12/2000\n31/12/2001\n31/12/2002\n31/12/2003\n31/12/2004\n31/12/2005\n31/12/2006\n31/12/2007\n31/12/2008\n31/12/2009\n31/12/2010\n31/12/2011\n31/12/2012\n31/12/2013\n31/12/2014\n31/12/2015\n31/12/2016\n31/12/2017\n31/12/2018\n31/12/2019\n31/12/2020\n31/12/2021\n31/12/2022\n31/12/2023\n31/12/2024\n\n\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t    Date fin         :\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \n\n31/12/2024\n31/12/2023\n31/12/2022\n31/12/2021\n31/12/2020\n31/12/2019\n31/12/2018\n31/12/2017\n31/12/2016\n31/12/2015\n31/12/2014\n31/12/2013\n31/12/2012\n31/12/2011\n31/12/2010\n31/12/2009\n31/12/2008\n31/12/2007\n31/12/2006\n31/12/2005\n31/12/2004\n31/12/2003\n31/12/2002\n31/12/2001\n31/12/2000",
+            "",
+            ""
+          ],
+          "has_numeric_data": true
+        }
+      ],
+      "data_links": [
+        {
+          "href": "/bct/siteprod/tableau_statistique_a.jsp?params=PL212010&la=AN",
+          "text": "English"
+        },
+        {
+          "href": "arabe/statistiques/tableau_statistique_a.jsp?params=PL212010",
+          "text": "عربي"
+        },
+        {
+          "href": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique.jsp?params=PL203273",
+          "text": "Situation mensuelle de la BCT"
+        },
+        {
+          "href": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique.jsp?params=PL203274",
+          "text": "Situation mensuelle des autres institutions de dépôts (AID)"
+        },
+        {
+          "href": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique.jsp?params=PL203275",
+          "text": "Situation mensuelle des institutions de dépôts (SID)"
+        },
+        {
+          "href": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique.jsp?params=PL203276",
+          "text": "Agrégats de monnaie et leurs contreparties"
+        },
+        {
+          "href": "https://www.bct.gov.tn/bct/siteprod/documents/2025_Situation_Mensuelle_Leasing_fr.pdf",
+          "text": "Situation mensuelle des organismes de leasing"
+        },
+        {
+          "href": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique.jsp?params=PL203278",
+          "text": "Situation mensuelle des banques offshore"
+        },
+        {
+          "href": "https://www.bct.gov.tn/bct/siteprod/documents/202405_NOTE_METHODOLOGIQUE_MONETAIRE_FR.pdf",
+          "text": "Notes méthodologiques"
+        },
+        {
+          "href": "https://www.bct.gov.tn/bct/siteprod/tableau_statistique.jsp?params=PL203010",
+          "text": "Situation mensuelle de la BCT"
+        }
+      ]
+    },
+    {
+      "url": "https://www.finances.gov.tn/fr/les-indicateurs/synthese-des-resultats-des-finances-publiques-budget-de-letat",
+      "status_code": 200,
+      "content_length": 71376,
+      "title": "Indicateurs des finances publiques | Le ministère des finances",
+      "tables_found": 1,
+      "numeric_values": [],
+      "potential_indicators": [
+        "Taux",
+        "indice",
+        "Dette",
+        "PIB",
+        "Déficit",
+        "dette"
+      ],
+      "year_mentions": [
+        "2025",
+        "2010",
+        "2020",
+        "2001",
+        "2014",
+        "2000",
+        "2013",
+        "2017",
+        "2016",
+        "2012",
+        "2023",
+        "2024",
+        "2004",
+        "2018",
+        "2021",
+        "2019",
+        "2015",
+        "2011",
+        "2022"
+      ],
+      "tables_detail": [
+        {
+          "table_index": 0,
+          "rows": 6,
+          "headers": [
+            "",
+            "2022",
+            "2023",
+            "Prov 2024",
+            "LF 2025",
+            "Déficit Budgétaire (*)( en MDT )",
+            "-11 062",
+            "-11 666",
+            "-10 653",
+            "-10 150"
+          ],
+          "has_numeric_data": true
+        }
+      ],
+      "data_links": []
+    }
+  ],
+  "alternative_urls": [
+    {
+      "url": "https://www.ins.tn/fr/publication/enquete-nationale-sur-lemploi-au-quatrieme-trimestre-2023",
+      "status_code": 404,
+      "content_length": 33074,
+      "title": "Page non trouvée | INS",
+      "tables_found": 0,
+      "numeric_values": [],
+      "potential_indicators": [
+        "export",
+        "population",
+        "emploi"
+      ],
+      "year_mentions": [
+        "2004",
+        "2000",
+        "2025",
+        "2021",
+        "2019",
+        "2001",
+        "2024"
+      ],
+      "tables_detail": [],
+      "data_links": [
+        {
+          "href": "/statistiques/45",
+          "text": "Statistiques par thèmes"
+        },
+        {
+          "href": "http://dataportal.ins.tn/",
+          "text": "Recherche"
+        },
+        {
+          "href": "http://dataportal.ins.tn/fr/DataAnalysis",
+          "text": "Analyse de Données"
+        },
+        {
+          "href": "http://dataportal.ins.tn/fr/Map",
+          "text": "Cartes"
+        },
+        {
+          "href": "http://dataportal.ins.tn/fr/DataQuery",
+          "text": "Requête de données"
+        }
+      ]
+    },
+    {
+      "url": "https://www.bct.gov.tn/bct/siteprod/stat_macro.jsp",
+      "status_code": 404,
+      "content_length": 1164,
+      "title": "Error 404--Not Found",
+      "tables_found": 2,
+      "numeric_values": [],
+      "potential_indicators": [],
+      "year_mentions": [],
+      "tables_detail": [
+        {
+          "table_index": 0,
+          "rows": 1,
+          "headers": [
+            "Error 404--Not Found"
+          ],
+          "has_numeric_data": true
+        },
+        {
+          "table_index": 1,
+          "rows": 1,
+          "headers": [
+            "From RFC 2068 Hypertext Transfer Protocol -- HTTP/1.1:\n10.4.5 404 Not Found\nThe server has not found anything matching the Request-URI. No indication is given of whether the condition is temporary or permanent.If the server does not wish to make this information available to the client, the status code 403 (Forbidden) can be used instead. The 410 (Gone) status code SHOULD be used if the server knows, through some internally configurable mechanism, that an old resource is permanently unavailable and has no forwarding address."
+          ],
+          "has_numeric_data": true
+        }
+      ],
+      "data_links": []
+    },
+    {
+      "url": "https://www.finances.gov.tn/sites/default/files/2024-03/note_conj_t4_2023_fr_0.pdf",
+      "status_code": 404,
+      "content_length": 37440,
+      "title": "Page non trouvée | Ministère des Finances",
+      "tables_found": 0,
+      "numeric_values": [],
+      "potential_indicators": [
+        "Dette",
+        "Taux",
+        "dette"
+      ],
+      "year_mentions": [
+        "2004",
+        "2019",
+        "2001",
+        "2000"
+      ],
+      "tables_detail": [],
+      "data_links": []
+    }
+  ],
+  "recommendations": [
+    "URL https://www.ins.tn/statistiques/50: Liens vers données trouvés - explorer ces liens",
+    "URL https://www.bct.gov.tn/bct/siteprod/tableau_statistique_a.jsp?params=PL212010: Peu de données numériques - vérifier si c'est la bonne page",
+    "URL https://www.bct.gov.tn/bct/siteprod/tableau_statistique_a.jsp?params=PL212010: Liens vers données trouvés - explorer ces liens",
+    "URL https://www.finances.gov.tn/fr/les-indicateurs/synthese-des-resultats-des-finances-publiques-budget-de-letat: Peu de données numériques - vérifier si c'est la bonne page"
+  ]
+}

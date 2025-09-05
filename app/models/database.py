@@ -1,11 +1,12 @@
 """
-Configuration de la base de données avec SQLAlchemy 2.0
-Modèle ScrapingTask compatible avec scraping_tasks.py et schemas.py
+Configuration de base de données simplifiée avec intelligence automatique
+Architecture unifiée compatible avec l'ensemble du système
 """
+
 import os
 import logging
 import uuid
-from typing import Optional, Generator
+from typing import Optional, Generator, Dict, Any, List
 from contextlib import contextmanager
 from sqlalchemy import create_engine, text, Column, Integer, String, DateTime, Text, JSON, Float
 from sqlalchemy.ext.declarative import declarative_base
@@ -14,36 +15,49 @@ from sqlalchemy.pool import QueuePool
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 
-# Configuration logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Base pour les modèles - SANS metadata (nom réservé)
+# Base pour les modèles
 Base = declarative_base()
 
-class DatabaseConfig:
-    """Configuration de la base de données"""
+class SmartDatabaseConfig:
+    """Configuration intelligente de base de données"""
     
     def __init__(self):
-        # URL de base de données depuis les variables d'environnement
-        self.database_url = os.getenv("DATABASE_URL")
-        if not self.database_url:
-            # Configuration par défaut
-            db_user = os.getenv("POSTGRES_USER", "postgres")
-            db_password = os.getenv("POSTGRES_PASSWORD", "dorra123")
-            db_host = os.getenv("POSTGRES_HOST", "db")
-            db_port = os.getenv("POSTGRES_PORT", "5432")
-            db_name = os.getenv("POSTGRES_DB", "scraper_db")
-            self.database_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+        # Configuration automatique depuis l'environnement
+        self.database_url = self._build_database_url()
         
-        # Configuration du pool
+        # Paramètres optimisés pour l'intelligence automatique
         self.pool_size = 20
         self.max_overflow = 10
         self.pool_timeout = 30
         self.pool_recycle = 3600
+        
+        logger.info(f"Smart database config initialized: {self._mask_url(self.database_url)}")
+
+    def _build_database_url(self) -> str:
+        """Construction intelligente de l'URL de base de données"""
+        # Vérifier DATABASE_URL d'abord
+        database_url = os.getenv("DATABASE_URL")
+        if database_url:
+            return database_url
+        
+        # Construction automatique depuis les composants
+        db_user = os.getenv("POSTGRES_USER", "postgres")
+        db_password = os.getenv("POSTGRES_PASSWORD", "dorra123")
+        db_host = os.getenv("DB_HOST", "db")
+        db_port = os.getenv("POSTGRES_PORT", "5432")
+        db_name = os.getenv("POSTGRES_DB", "scraper_db")
+        
+        return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    
+    def _mask_url(self, url: str) -> str:
+        """Masquer le mot de passe dans l'URL pour les logs"""
+        import re
+        return re.sub(r'://([^:]+):([^@]+)@', r'://\1:***@', url)
 
     def create_engine(self):
-        """Créer le moteur SQLAlchemy"""
+        """Créer le moteur SQLAlchemy optimisé"""
         return create_engine(
             self.database_url,
             poolclass=QueuePool,
@@ -56,63 +70,58 @@ class DatabaseConfig:
         )
 
 # Instance globale
-db_config = DatabaseConfig()
+db_config = SmartDatabaseConfig()
 engine = db_config.create_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# ✅ MODÈLE SCRAPINGTASK UNIFIÉ - Compatible avec scraping_tasks.py
 class ScrapingTask(Base):
-    """Modèle pour les tâches de scraping - VERSION UNIFIÉE"""
+    """Modèle unifié pour les tâches de scraping intelligent"""
     __tablename__ = "scraping_tasks"
     
-    # ✅ Colonnes principales
+    # Colonnes principales
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(String(255), unique=True, index=True, nullable=False, default=lambda: str(uuid.uuid4()))
     
-    # ✅ Configuration de la tâche
-    urls = Column(JSON, nullable=False)  # Liste des URLs (compatible scraping_tasks.py)
-    analysis_type = Column(String(50), nullable=False, default="standard")  # Compatible schemas.py
+    # Configuration intelligente de la tâche
+    urls = Column(JSON, nullable=False)  # Liste des URLs
+    analysis_type = Column(String(50), nullable=False, default="standard")
     status = Column(String(50), default="pending")
     priority = Column(Integer, default=1)
     
-    # ✅ Gestion des reprises
-    max_retries = Column(Integer, default=3, nullable=True, server_default='3')
-    current_retries = Column(Integer, default=0, nullable=True, server_default='0')
+    # Gestion automatique des reprises
+    max_retries = Column(Integer, default=3, nullable=False)
+    current_retries = Column(Integer, default=0, nullable=False)
     
-    # ✅ Timestamps
+    # Timestamps automatiques
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     
-    # ✅ Résultats et données (compatible scraping_tasks.py)
-    results = Column(JSON, nullable=True)  # Liste des résultats de scraping
-    error = Column(Text, nullable=True)  # Nom compatible avec scraping_tasks.py
-    progress = Column(JSON, nullable=True)  # Format JSON unifié
+    # Résultats et données intelligentes
+    results = Column(JSON, nullable=True)  # Résultats de scraping
+    error = Column(Text, nullable=True)  # Messages d'erreur
+    progress = Column(JSON, nullable=True)  # Progression unifiée
     
-    # ✅ Métriques et analytics
-    metrics = Column(JSON, nullable=True)  # Utilisé dans scraping_tasks.py
-    
-    # ✅ Configuration avancée
+    # Métriques et intelligence
+    metrics = Column(JSON, nullable=True)  # Métriques de performance
     parameters = Column(JSON, nullable=True)  # Paramètres de scraping
     callback_url = Column(String, nullable=True)
     
-    # ✅ Métadonnées (renommé pour éviter conflit)
+    # Métadonnées intelligentes
     metadata_info = Column(JSON, nullable=True)
-    
-    # ✅ Informations worker
     worker_id = Column(String(100), nullable=True)
     
-    # ✅ Champs de compatibilité pour l'ancien schéma
-    url = Column(String, nullable=True)  # Maintenu pour compatibilité
+    # Champs de compatibilité
+    url = Column(String, nullable=True)
     task_type = Column(String, default="scraping")
-    error_message = Column(Text, nullable=True)  # Alias pour error
-    
+    error_message = Column(Text, nullable=True)
+
     def __repr__(self):
-        return f"<ScrapingTask(task_id='{self.task_id}', status='{self.status}', urls={len(self.urls) if self.urls else 0})>"
+        return f"<ScrapingTask(task_id='{self.task_id}', status='{self.status}', urls_count={len(self.urls) if self.urls else 0})>"
     
-    def to_dict(self):
-        """Convertir en dictionnaire pour API JSON - Compatible schemas.py"""
+    def to_dict(self) -> Dict[str, Any]:
+        """Conversion en dictionnaire pour API JSON"""
         return {
             'id': self.id,
             'task_id': self.task_id,
@@ -126,22 +135,24 @@ class ScrapingTask(Base):
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'results': self.results or [],
             'error': self.error,
-            'progress': self.progress or {},
+            'progress': self.progress or self._default_progress(),
             'metrics': self.metrics or {},
             'parameters': self.parameters or {},
             'callback_url': self.callback_url,
             'max_retries': self.max_retries,
             'current_retries': self.current_retries,
-            'worker_id': self.worker_id
+            'worker_id': self.worker_id,
+            'task_type': self.task_type,
+            'metadata_info': self.metadata_info
         }
 
-    def to_task_response(self):
-        """Transformer l'objet ScrapingTask en réponse JSON pour l'API /tasks/{task_id}"""
+    def to_task_response(self) -> Dict[str, Any]:
+        """Conversion pour réponse API /tasks/{task_id}"""
         return {
             "task_id": self.task_id,
             "status": self.status,
             "analysis_type": self.analysis_type,
-            "progress": self.progress or {"current": 0, "total": 1, "percentage": 0, "display": "0/1"},
+            "progress": self.progress or self._default_progress(),
             "results": self.results or [],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
@@ -152,11 +163,36 @@ class ScrapingTask(Base):
             "metrics": self.metrics or {},
             "callback_url": self.callback_url,
             "worker_id": self.worker_id,
-            "task_type": self.task_type,
-            "error_message": self.error_message,
-            "metadata_info": self.metadata_info
+            "intelligence_features": {
+                "smart_coordination": True,
+                "automatic_strategy": True,
+                "llm_available": False,  # Sera mis à jour dynamiquement
+                "tunisian_optimization": True
+            }
         }
-
+    
+    def _default_progress(self) -> Dict[str, Any]:
+        """Progression par défaut standardisée"""
+        return {
+            "current": 0,
+            "total": len(self.urls) if self.urls else 1,
+            "percentage": 0.0,
+            "display": f"0/{len(self.urls) if self.urls else 1}"
+        }
+    
+    def update_progress(self, current: int, total: Optional[int] = None):
+        """Mise à jour intelligente de la progression"""
+        if total is None:
+            total = len(self.urls) if self.urls else 1
+        
+        percentage = (current / total * 100) if total > 0 else 0
+        
+        self.progress = {
+            "current": current,
+            "total": total,
+            "percentage": round(percentage, 1),
+            "display": f"{current}/{total}"
+        }
 
 def get_db() -> Generator[Session, None, None]:
     """Générateur de session de base de données"""
@@ -164,7 +200,7 @@ def get_db() -> Generator[Session, None, None]:
     try:
         yield db
     except Exception as e:
-        logger.error(f"Erreur session DB: {e}")
+        logger.error(f"Database session error: {e}")
         db.rollback()
         raise
     finally:
@@ -172,206 +208,219 @@ def get_db() -> Generator[Session, None, None]:
 
 @contextmanager
 def get_db_session():
-    """Context manager pour session DB"""
+    """Context manager pour session DB avec gestion automatique"""
     db = SessionLocal()
     try:
         yield db
         db.commit()
     except Exception as e:
-        logger.error(f"Erreur session DB: {e}")
+        logger.error(f"Database session error: {e}")
         db.rollback()
         raise
     finally:
         db.close()
 
 def test_database_connection() -> bool:
-    """Tester la connexion à la base de données"""
+    """Test intelligent de connexion base de données"""
     try:
-        logger.info("🔧 Testing database connection...")
+        logger.info("Testing database connection...")
         with engine.connect() as connection:
-            # SQLAlchemy 2.0 - Utiliser text() obligatoirement
             result = connection.execute(text("SELECT 1 as test"))
             test_result = result.fetchone()
             if test_result and test_result[0] == 1:
-                logger.info("✅ Database connection test successful")
+                logger.info("Database connection test successful")
                 return True
             return False
     except Exception as e:
-        logger.error(f"❌ Database connection test failed: {e}")
+        logger.error(f"Database connection test failed: {e}")
         return False
 
-def create_tables():
-    """Créer toutes les tables"""
+def create_tables() -> bool:
+    """Création intelligente des tables"""
     try:
-        logger.info("🔧 Creating database tables...")
-        # Créer toutes les tables définies dans Base
+        logger.info("Creating/verifying database tables...")
         Base.metadata.create_all(bind=engine)
-        logger.info("✅ Database tables created/verified successfully")
+        logger.info("Database tables created/verified successfully")
         return True
     except Exception as e:
-        logger.error(f"❌ Failed to create tables: {e}")
+        logger.error(f"Failed to create tables: {e}")
         return False
 
-def init_database():
-    """Initialiser la base de données"""
+def init_database() -> bool:
+    """Initialisation intelligente de la base de données"""
     try:
-        logger.info("🔧 Initializing database...")
+        logger.info("Initializing smart database...")
         
+        # Test de connexion
         if not test_database_connection():
-            raise Exception("Connection failed")
+            raise Exception("Database connection failed")
         
-        # Ajoutez ces lignes :
-        verify_schema()
-        upgrade_schema()
-        normalize_progress_column()
+        # Mise à jour du schéma
+        upgrade_schema_smart()
         
+        # Normalisation des données
+        normalize_data_smart()
+        
+        # Création des tables
         if not create_tables():
             raise Exception("Table creation failed")
         
-        logger.info("✅ Database initialization completed successfully")
+        logger.info("Smart database initialization completed successfully")
         return True
         
     except Exception as e:
-        logger.error(f"❌ Database initialization failed: {e}")
+        logger.error(f"Smart database initialization failed: {e}")
         return False
 
-# Alias pour compatibilité avec les anciens scripts
-def init_db():
-    """Alias pour init_database() pour compatibilité"""
-    return init_database()
-
-def verify_schema():
-    """Vérifier que le schéma de la base de données est à jour"""
+def upgrade_schema_smart():
+    """Mise à jour intelligente du schéma"""
     try:
+        logger.info("Upgrading database schema...")
+        
         with engine.connect() as connection:
-            # Vérifier l'existence de la table scraping_tasks
-            result = connection.execute(text("""
+            # Vérifier l'existence de la table
+            table_exists = connection.execute(text("""
                 SELECT EXISTS (
                     SELECT FROM information_schema.tables 
                     WHERE table_schema = 'public' 
                     AND table_name = 'scraping_tasks'
                 );
-            """))
+            """)).fetchone()[0]
             
-            table_exists = result.fetchone()[0]
-            if table_exists:
-                logger.info("✅ Database schema is up to date")
-                
-                # Vérifier si la colonne task_id existe
-                column_check = connection.execute(text("""
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.columns 
-                        WHERE table_schema = 'public' 
-                        AND table_name = 'scraping_tasks'
-                        AND column_name = 'task_id'
-                    );
-                """))
-                
-                if column_check.fetchone()[0]:
-                    logger.info("✅ task_id column exists")
-                else:
-                    logger.warning("⚠️ task_id column missing - will be created")
-                    
-            else:
-                logger.info("ℹ️ scraping_tasks table will be created")
-                
-    except Exception as e:
-        logger.warning(f"⚠️ Could not verify schema: {e}")
-
-def normalize_progress_column():
-    """Normaliser la colonne progress pour s'assurer qu'elle contient du JSON valide"""
-    try:
-        with engine.connect() as connection:
-            # Mettre à jour les enregistrements avec progress NULL ou invalide
-            update_query = text("""
-                UPDATE scraping_tasks 
-                SET progress = jsonb_build_object(
-                    'current', COALESCE((progress->>'current')::int, 0),
-                    'total', COALESCE((progress->>'total')::int, 1),
-                    'percentage', COALESCE((progress->>'percentage')::float, 0.0),
-                    'display', COALESCE(progress->>'display', '0/1')
-                )
-                WHERE progress IS NULL 
-                OR NOT jsonb_typeof(progress) = 'object'
-                OR progress->>'current' IS NULL
-                OR progress->>'total' IS NULL;
-            """)
+            if not table_exists:
+                logger.info("Table scraping_tasks will be created")
+                return
             
-            result = connection.execute(update_query)
-            connection.commit()
+            # Ajouter colonnes manquantes si nécessaire
+            columns_to_add = [
+                ("task_id", "VARCHAR(255) UNIQUE"),
+                ("urls", "JSON"),
+                ("analysis_type", "VARCHAR(50) DEFAULT 'standard'"),
+                ("metrics", "JSON"),
+                ("parameters", "JSON"),
+                ("metadata_info", "JSON"),
+                ("max_retries", "INTEGER DEFAULT 3"),
+                ("current_retries", "INTEGER DEFAULT 0")
+            ]
             
-            if result.rowcount > 0:
-                logger.info(f"✅ Normalized {result.rowcount} progress records")
-            else:
-                logger.info("✅ Progress column is already normalized")
-                
-    except Exception as e:
-        logger.warning(f"⚠️ Could not normalize progress column: {e}")
-
-# ✅ FONCTION D'UPGRADE DE SCHÉMA (pour migration depuis ancien modèle)
-def upgrade_schema():
-    """Mettre à jour le schéma de la base de données"""
-    try:
-        logger.info("🔄 Upgrading database schema...")
-        
-        with engine.connect() as connection:
-            # Ajouter task_id si elle n'existe pas
-            try:
-                connection.execute(text("""
-                    ALTER TABLE scraping_tasks 
-                    ADD COLUMN IF NOT EXISTS task_id VARCHAR(255) UNIQUE;
-                """))
-                logger.info("✅ task_id column added/verified")
-            except Exception as e:
-                logger.debug(f"task_id column might already exist: {e}")
+            for column_name, column_def in columns_to_add:
+                try:
+                    connection.execute(text(f"""
+                        ALTER TABLE scraping_tasks 
+                        ADD COLUMN IF NOT EXISTS {column_name} {column_def};
+                    """))
+                    logger.debug(f"Column {column_name} added/verified")
+                except Exception as e:
+                    logger.debug(f"Column {column_name} might already exist: {e}")
             
-            # Ajouter urls si elle n'existe pas
-            try:
-                connection.execute(text("""
-                    ALTER TABLE scraping_tasks 
-                    ADD COLUMN IF NOT EXISTS urls JSON;
-                """))
-                logger.info("✅ urls column added/verified")
-            except Exception as e:
-                logger.debug(f"urls column might already exist: {e}")
-            
-            # Ajouter analysis_type si elle n'existe pas
-            try:
-                connection.execute(text("""
-                    ALTER TABLE scraping_tasks 
-                    ADD COLUMN IF NOT EXISTS analysis_type VARCHAR(50) DEFAULT 'standard';
-                """))
-                logger.info("✅ analysis_type column added/verified")
-            except Exception as e:
-                logger.debug(f"analysis_type column might already exist: {e}")
-            
-            # Ajouter metrics si elle n'existe pas
-            try:
-                connection.execute(text("""
-                    ALTER TABLE scraping_tasks 
-                    ADD COLUMN IF NOT EXISTS metrics JSON;
-                """))
-                logger.info("✅ metrics column added/verified")
-            except Exception as e:
-                logger.debug(f"metrics column might already exist: {e}")
-            
-            # Mettre à jour les task_id manquants
+            # Mise à jour des task_id manquants
             connection.execute(text("""
                 UPDATE scraping_tasks 
-                SET task_id = gen_random_uuid()::text 
+                SET task_id = CAST(random() * 1000000000 AS VARCHAR) || '-' || CAST(EXTRACT(epoch FROM NOW()) AS VARCHAR)
                 WHERE task_id IS NULL OR task_id = '';
             """))
             
             connection.commit()
-            logger.info("✅ Schema upgrade completed")
+            logger.info("Schema upgrade completed successfully")
             
     except Exception as e:
-        logger.error(f"❌ Schema upgrade failed: {e}")
+        logger.error(f"Schema upgrade failed: {e}")
         raise
 
-# Variables d'export pour compatibilité
+def normalize_data_smart():
+    """Normalisation intelligente des données existantes"""
+    try:
+        with engine.connect() as connection:
+            # Normaliser la colonne progress
+            connection.execute(text("""
+                UPDATE scraping_tasks 
+                SET progress = '{"current": 0, "total": 1, "percentage": 0.0, "display": "0/1"}'::json
+                WHERE progress IS NULL 
+                OR progress::text = 'null'
+                OR progress::text = '{}';
+            """))
+            
+            # Normaliser la colonne urls pour les anciennes tâches
+            connection.execute(text("""
+                UPDATE scraping_tasks 
+                SET urls = CASE 
+                    WHEN url IS NOT NULL AND urls IS NULL THEN json_build_array(url)
+                    WHEN urls IS NULL THEN '[]'::json
+                    ELSE urls
+                END;
+            """))
+            
+            # Normaliser les métriques
+            connection.execute(text("""
+                UPDATE scraping_tasks 
+                SET metrics = '{}'::json
+                WHERE metrics IS NULL;
+            """))
+            
+            connection.commit()
+            logger.info("Data normalization completed")
+            
+    except Exception as e:
+        logger.warning(f"Data normalization failed: {e}")
+
+def get_database_status() -> Dict[str, Any]:
+    """Statut intelligent de la base de données"""
+    try:
+        status = {
+            "connection": test_database_connection(),
+            "tables_exist": False,
+            "total_tasks": 0,
+            "active_tasks": 0,
+            "database_url_configured": bool(db_config.database_url)
+        }
+        
+        if status["connection"]:
+            with engine.connect() as connection:
+                # Vérifier l'existence des tables
+                table_check = connection.execute(text("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_schema = 'public' 
+                        AND table_name = 'scraping_tasks'
+                    );
+                """))
+                status["tables_exist"] = table_check.fetchone()[0]
+                
+                if status["tables_exist"]:
+                    # Compter les tâches
+                    total_count = connection.execute(text("SELECT COUNT(*) FROM scraping_tasks"))
+                    status["total_tasks"] = total_count.fetchone()[0]
+                    
+                    active_count = connection.execute(text("""
+                        SELECT COUNT(*) FROM scraping_tasks 
+                        WHERE status IN ('pending', 'running')
+                    """))
+                    status["active_tasks"] = active_count.fetchone()[0]
+        
+        return status
+        
+    except Exception as e:
+        logger.error(f"Failed to get database status: {e}")
+        return {"connection": False, "error": str(e)}
+
+# Fonctions de compatibilité
+def init_db():
+    """Alias pour compatibilité"""
+    return init_database()
+
+def verify_schema():
+    """Vérification de schéma pour compatibilité"""
+    try:
+        upgrade_schema_smart()
+        return True
+    except Exception as e:
+        logger.error(f"Schema verification failed: {e}")
+        return False
+
+# Export des éléments principaux
 __all__ = [
     'Base', 'engine', 'SessionLocal', 'get_db', 'get_db_session',
     'test_database_connection', 'init_database', 'init_db', 'create_tables',
-    'ScrapingTask', 'verify_schema', 'normalize_progress_column', 'upgrade_schema'
+    'ScrapingTask', 'upgrade_schema_smart', 'normalize_data_smart', 
+    'get_database_status', 'SmartDatabaseConfig'
 ]

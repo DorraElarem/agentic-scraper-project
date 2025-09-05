@@ -21,11 +21,6 @@ services:
     restart: unless-stopped
     networks:
       - agentic-scraper-network
-    command: >
-      postgres -c log_statement=all 
-      -c logging_collector=on 
-      -c log_destination=stderr 
-      -c max_connections=100
 
   # Redis pour Celery
   redis:
@@ -43,9 +38,9 @@ services:
     restart: unless-stopped
     networks:
       - agentic-scraper-network
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
 
-  # Ollama pour LLM - OPTIMISÉ avec fallback
+  # Ollama pour LLM - TIMEOUTS MASSIFS
   ollama:
     image: ollama/ollama:latest
     ports:
@@ -54,29 +49,30 @@ services:
       - ollama_data:/root/.ollama
     environment:
       - OLLAMA_HOST=0.0.0.0
-      - OLLAMA_KEEP_ALIVE=5m
+      - OLLAMA_KEEP_ALIVE=15m               # AUGMENTÉ
       - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_MAX_LOADED_MODELS=1
-      - OLLAMA_CONTEXT_LENGTH=3072
-      - OLLAMA_MAX_QUEUE=128
+      - OLLAMA_CONTEXT_LENGTH=4096
+      - OLLAMA_MAX_QUEUE=64                 # RÉDUIT
+      - OLLAMA_REQUEST_TIMEOUT=900          # NOUVEAU: 15 minutes
     restart: unless-stopped
     networks:
       - agentic-scraper-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:11434/api/version", "||", "exit", "0"]
-      interval: 30s
-      timeout: 10s
+      interval: 60s                         # AUGMENTÉ
+      timeout: 20s                          # AUGMENTÉ
       retries: 3
-      start_period: 30s
+      start_period: 60s                     # AUGMENTÉ
     deploy:
       resources:
         limits:
-          memory: 6G
-          cpus: '2.0'
+          memory: 8G                        # AUGMENTÉ
+          cpus: '3.0'                       # AUGMENTÉ
         reservations:
-          memory: 4G
+          memory: 6G                        # AUGMENTÉ
 
-  # Application FastAPI
+  # Application FastAPI - TIMEOUTS MASSIFS
   web:
     build:
       context: .
@@ -91,13 +87,17 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - REDIS_URL=redis://redis:6379/0
       - OLLAMA_HOST=http://ollama:11434
-      - OLLAMA_TIMEOUT=60
+      # CORRECTION CRITIQUE: Timeouts cohérents et MASSIFS
+      - OLLAMA_TIMEOUT=900                  # 15 minutes
+      - OLLAMA_CONNECTION_TIMEOUT=45        # 45 secondes
+      - OLLAMA_QUICK_TIMEOUT=180            # 3 minutes
+      - REQUEST_TIMEOUT=180                 # 3 minutes
+      - TASK_TIME_LIMIT=1200                # 20 minutes
+      - TASK_SOFT_TIME_LIMIT=1080           # 18 minutes
+      - BCT_TIMEOUT=300                     # 5 minutes pour BCT
+      - INS_TIMEOUT=240                     # 4 minutes pour INS
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
-      # 🔥 FIX CRITIQUE: Valeur simple pour éviter l'erreur de parsing JSON
-      - CELERY_ACCEPT_CONTENT=json
-      - CELERY_TASK_SERIALIZER=json
-      - CELERY_RESULT_SERIALIZER=json
     volumes:
       - .:/app
     depends_on:
@@ -110,30 +110,14 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
+      interval: 45s                         # AUGMENTÉ
+      timeout: 15s                          # AUGMENTÉ
       retries: 3
-      start_period: 40s
+      start_period: 60s                     # AUGMENTÉ
     networks:
       - agentic-scraper-network
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '1.0'
-    command: >
-      sh -c "
-        echo '🚀 Starting FastAPI application...' &&
-        echo '⏳ Waiting for services...' &&
-        sleep 15 &&
-        echo '🔧 Running database migrations...' &&
-        cd /app && python -c 'from app.models.database import init_db; init_db()' &&
-        echo '✅ Database initialized' &&
-        echo '🌐 Starting FastAPI server...' &&
-        cd /app && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-      "
 
-  # Worker Celery - VERSION CORRIGÉE avec PYTHONPATH
+  # Worker Celery - TIMEOUTS MASSIFS ET COHÉRENTS
   worker:
     build:
       context: .
@@ -146,13 +130,20 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - REDIS_URL=redis://redis:6379/0
       - OLLAMA_HOST=http://ollama:11434
-      - OLLAMA_TIMEOUT=60
+      # CORRECTION CRITIQUE: Timeouts MASSIFS et cohérents
+      - OLLAMA_TIMEOUT=900                  # 15 minutes
+      - OLLAMA_CONNECTION_TIMEOUT=45        # 45 secondes
+      - OLLAMA_QUICK_TIMEOUT=180            # 3 minutes
+      - REQUEST_TIMEOUT=180                 # 3 minutes
+      - TASK_TIME_LIMIT=1200                # 20 minutes
+      - TASK_SOFT_TIME_LIMIT=1080           # 18 minutes
+      - BCT_TIMEOUT=300                     # 5 minutes pour BCT
+      - INS_TIMEOUT=240                     # 4 minutes pour INS
+      - OLLAMA_NUM_CTX=4096
+      - OLLAMA_MAX_TOKENS=600
+      - OLLAMA_TEMPERATURE=0.1
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
-      # 🔥 FIX CRITIQUE: Valeurs simples
-      - CELERY_ACCEPT_CONTENT=json
-      - CELERY_TASK_SERIALIZER=json
-      - CELERY_RESULT_SERIALIZER=json
     volumes:
       - .:/app
     depends_on:
@@ -165,28 +156,18 @@ services:
     restart: unless-stopped
     networks:
       - agentic-scraper-network
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-          cpus: '2.0'
     command: >
       sh -c "
-        echo '🔧 Starting Celery Worker...' &&
-        echo '⏳ Waiting for services...' &&
-        sleep 25 &&
-        echo '🧪 Running diagnostics...' &&
-        cd /app && python app/worker.py --diagnose-only &&
-        echo '✅ Diagnostics passed' &&
-        echo '🚀 Starting Celery worker...' &&
-        cd /app && celery -A app.celery_app:celery_app worker --loglevel=info --concurrency=2 --pool=prefork --max-tasks-per-child=1000
+        echo 'Starting Celery Worker with MASSIVE timeouts...' &&
+        sleep 45 &&
+        cd /app && celery -A app.celery_app:celery_app worker --loglevel=info --concurrency=1 --pool=prefork --max-tasks-per-child=50 --time-limit=1200 --soft-time-limit=1080
       "
     healthcheck:
       test: ["CMD-SHELL", "ps aux | grep '[c]elery.*worker' || exit 1"]
-      interval: 60s
-      timeout: 15s
+      interval: 90s                         # AUGMENTÉ
+      timeout: 25s                          # AUGMENTÉ
       retries: 3
-      start_period: 120s
+      start_period: 180s                    # AUGMENTÉ (3 minutes)
 
   # Flower pour monitoring Celery
   flower:
@@ -206,16 +187,10 @@ services:
     restart: unless-stopped
     networks:
       - agentic-scraper-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5555"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
     command: >
       sh -c "
-        echo '🌸 Starting Flower...' &&
-        sleep 20 &&
+        echo 'Starting Flower...' &&
+        sleep 30 &&
         cd /app && celery -A app.celery_app:celery_app flower --port=5555 --basic_auth=admin:admin123
       "
 

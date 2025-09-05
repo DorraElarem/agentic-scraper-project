@@ -1,0 +1,54 @@
+{
+  "url": "https://httpbin.org/json",
+  "content": "",
+  "structured_data": {
+    "extracted_values": {},
+    "fallback_mode": true,
+    "error_recovery": true,
+    "original_error": "No content extracted"
+  },
+  "metadata": {
+    "scraping_method": "fallback_recovery",
+    "error_message": "No content extracted",
+    "timestamp": "2025-09-04T18:15:56.414998",
+    "fallback_reason": "intelligent_scraper_error_recovery",
+    "llm_analysis": {
+      "status": "failed",
+      "fallback_reason": "Error: HTTPConnectionPool(host='ollama', port=11434): Max retries exceeded with url: /api/generate (Caused by ReadTimeoutError(\"HTTPConnectionPool(host='ollama', port=11434): Read timed out. (read timeout=45)\"))",
+      "timestamp": "2025-09-04T18:18:12.548181"
+    }
+  },
+  "cohesive_scraper_info": {
+    "scraper_type": "CohesiveIntelligentScraper",
+    "modules_used": [
+      "utils_helpers",
+      "data_validator",
+      "temporal_filter",
+      "clean_extractor",
+      "storage",
+      "llm_analysis"
+    ],
+    "usage_stats": {
+      "utils_helpers": 1,
+      "data_validator": 1,
+      "temporal_filter": 1,
+      "clean_extractor": 1,
+      "storage": 1,
+      "llm_analysis": 1
+    },
+    "timestamp": "2025-09-04T18:18:12.548841"
+  },
+  "storage_metadata": {
+    "task_id": null,
+    "storage_timestamp": "2025-09-04T18:18:12.548867",
+    "storage_version": "2.0_smart",
+    "data_size": 1065,
+    "intelligence_features": true
+  },
+  "normalized_url": "https://httpbin.org/json",
+  "content_classification": {
+    "primary_type": "web_content",
+    "data_richness": "low",
+    "economic_relevance": "unknown"
+  }
+}
