@@ -8,49 +8,49 @@ Agentic Scraper Project est un système avancé de scraping intelligent qui util
 
 ### 🤖 Frameworks d'Agents IA
 
-LangGraph - Pour la création de workflows multi-agents intelligents
+**LangGraph** - Pour la création de workflows multi-agents intelligents
 
-LangChain - Pour l'orchestration des agents et la gestion des prompts
+**LangChain** - Pour l'orchestration des agents et la gestion des prompts
 
-Multi-agent systems - Architecture avec agents spécialisés
+**Multi-agent systems** - Architecture avec agents spécialisés
 
 ### 🕸️ Outils de Scraping
 
-BeautifulSoup4 - Analyse et parsing HTML/XML
+**BeautifulSoup4** - Analyse et parsing HTML/XML
 
-Requests - Requêtes HTTP avec sessions persistantes
+**Requests** - Requêtes HTTP avec sessions persistantes
 
-AsyncIO - Traitement asynchrone pour le scraping parallèle
+**AsyncIO** - Traitement asynchrone pour le scraping parallèle
 
-Custom scrapers - Scrapers spécialisés pour sites tunisiens
+**Custom scrapers** - Scrapers spécialisés pour sites tunisiens
 
 ### 🧠 Analyse LLM
 
-Ollama - Infrastructure LLM locale pour l'analyse de contenu
+**Ollama** - Infrastructure LLM locale pour l'analyse de contenu
 
-Modèles Mistral/LLama - Modèles de langage pour l'analyse économique
+**Modèles Mistral/LLama** - Modèles de langage pour l'analyse économique
 
-Analyse contextuelle - Compréhension des données économiques tunisiennes
+**Analyse contextuelle** - Compréhension des données économiques tunisiennes
 
 ### 📊 Traitement de Données
 
-Pydantic - Validation et modélisation des données
+**Pydantic** - Validation et modélisation des données
 
-JSON Schema - Structures de données normalisées
+**JSON Schema** - Structures de données normalisées
 
-Temporal filtering - Filtrage intelligent par période temporelle
+**Temporal filtering** - Filtrage intelligent par période temporelle
 
-Data validation - Validation automatique des indicateurs économiques
+**Data validation** - Validation automatique des indicateurs économiques
 
 ## 🚀 Infrastructure
 
-FastAPI - API REST moderne et performante
+**FastAPI** - API REST moderne et performante
 
-Docker - Containérisation de l'application
+**Docker** - Containérisation de l'application
 
-Docker Compose - Orchestration des services
+**Docker Compose** - Orchestration des services
 
-Celery - Gestion des tâches asynchrones
+**Celery** - Gestion des tâches asynchrones
 
 ## 🎯 Fonctionnalités Techniques
 
