@@ -135,7 +135,6 @@ app/
 │   └── scraping_tasks.py   
 
 └── utils/                  # Utilities techniques
-
     ├── data_validator.py   # Validation des données
     
     ├── helpers.py          # Fonctions utilitaires
