@@ -148,7 +148,6 @@ app/
 
     
 ## 🚀 Installation et Utilisation
-bash
 ###  Cloner le repository
 git clone https://github.com/DorraElarem/agentic-scraper-project.git
 
